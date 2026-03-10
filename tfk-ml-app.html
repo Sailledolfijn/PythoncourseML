@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TF/K ML">
+<meta name="theme-color" content="#0e0c15">
+<meta name="mobile-web-app-capable" content="yes">
+<title>TF/K — ML with TensorFlow & Keras</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230e0c15' width='100' height='100' rx='20'/><text y='68' x='50' text-anchor='middle' font-size='42' font-family='serif' fill='%23c9a227'>TF</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230e0c15' width='100' height='100' rx='20'/><text y='68' x='50' text-anchor='middle' font-size='42' font-family='serif' fill='%23c9a227'>TF</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;800&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0e0c15;overflow-x:hidden;-webkit-tap-highlight-color:transparent;
+  padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+@keyframes spin{to{transform:rotate(360deg)}}
+textarea{-webkit-appearance:none}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ═══════════════════════════════════════════════════════════════
+// LESSONS — 30 Days of ML with TensorFlow & Keras
+// ═══════════════════════════════════════════════════════════════
+const LESSONS = [
+  {
+    day: 1, title: "ML Foundations Recap",
+    content: `Before we dive into TensorFlow, let's make sure the core machine learning concepts are solid. You already used scikit-learn — now we're going deeper.\n\nMachine learning is about finding patterns in data. There are three main types:\n\n**Supervised Learning** — you have labeled data (inputs AND correct answers). The model learns to map inputs to outputs.\n• Regression — predict a number (house price, temperature)\n• Classification — predict a category (spam/not spam, cat/dog)\n\n**Unsupervised Learning** — you only have inputs, no labels. The model finds structure on its own.\n• Clustering — group similar items together\n• Dimensionality reduction — simplify complex data\n\n**The ML workflow** you'll follow throughout this course:\n\n\`\`\`python\n# 1. Prepare data\nX_train, X_test, y_train, y_test = train_test_split(X, y)\n\n# 2. Build model\nmodel = create_model()\n\n# 3. Train (fit)\nmodel.fit(X_train, y_train)\n\n# 4. Evaluate\nscore = model.evaluate(X_test, y_test)\n\n# 5. Predict\npredictions = model.predict(new_data)\n\`\`\`\n\n**Why TensorFlow/Keras instead of scikit-learn?** Scikit-learn is great for traditional ML (linear regression, decision trees, random forests). But for deep learning — neural networks with many layers that can learn from images, text, audio — you need TensorFlow. Keras is TensorFlow's high-level API that makes building neural networks simple.\n\n**Key takeaway:** ML finds patterns in data. TensorFlow/Keras extends your toolkit from traditional ML into deep learning — neural networks that can handle complex data like images and text.`,
+    cards: [
+      { q: "What's the difference between regression and classification?", a: "Regression predicts a continuous number; classification predicts a discrete category" },
+      { q: "Why use TensorFlow instead of scikit-learn?", a: "TensorFlow handles deep learning (neural networks) for complex data like images and text, which scikit-learn can't do well" }
+    ],
+    exercise: {
+      prompt: "Write a function prepare_ml_data(df, target_col, test_size=0.2) that: (1) separates features (X) and target (y), (2) identifies and one-hot-encodes any string columns in X, (3) splits into train/test, (4) returns X_train, X_test, y_train, y_test. Use pandas and sklearn.",
+      hint: "Use pd.get_dummies(X) for one-hot encoding. train_test_split from sklearn.",
+      solution: `import pandas as pd\nfrom sklearn.model_selection import train_test_split\n\ndef prepare_ml_data(df, target_col, test_size=0.2):\n    X = df.drop(columns=[target_col])\n    y = df[target_col]\n    X = pd.get_dummies(X, drop_first=True)\n    return train_test_split(X, y, test_size=test_size, random_state=42)`,
+      difficulty: 2
+    }
+  },
+  {
+    day: 2, title: "Installing & Importing TensorFlow",
+    content: `TensorFlow is Google's open-source ML framework. Keras is built into TensorFlow as its official high-level API — you don't need to install it separately.\n\n**Installation** (if you haven't already):\n\n\`\`\`python\n# In your terminal:\n# pip install tensorflow\n\`\`\`\n\n**Importing TensorFlow and Keras:**\n\n\`\`\`python\nimport tensorflow as tf\nfrom tensorflow import keras\nfrom tensorflow.keras import layers\n\nprint(tf.__version__)  # e.g., 2.15.0\n\`\`\`\n\nThe convention is to import tensorflow as tf. Keras lives inside tf.keras.\n\n**TensorFlow's core concept: Tensors.** A tensor is just a multi-dimensional array — the same idea as NumPy arrays, but tensors can run on GPUs for massive speedups.\n\n\`\`\`python\n# Creating tensors\na = tf.constant([1, 2, 3])            # from a list\nb = tf.constant([[1, 2], [3, 4]])     # 2D tensor\nc = tf.zeros((3, 4))                  # 3x4 of zeros\nd = tf.random.normal((2, 3))          # random normal\n\nprint(a.shape)    # (3,)\nprint(a.dtype)    # tf.int32\nprint(a.numpy())  # convert to NumPy array: [1 2 3]\n\`\`\`\n\n**Tensors vs NumPy arrays:** They look similar, but tensors can be computed on GPUs. You can convert freely between them:\n\n\`\`\`python\nimport numpy as np\n\nnp_arr = np.array([1.0, 2.0, 3.0])\ntensor = tf.constant(np_arr)       # NumPy → Tensor\nback = tensor.numpy()               # Tensor → NumPy\n\`\`\`\n\n**Checking for GPU:**\n\n\`\`\`python\nprint("GPUs:", tf.config.list_physical_devices('GPU'))\n# Empty list = CPU only, which is fine for learning!\n\`\`\`\n\n**Key takeaway:** Import as tf. Tensors are like NumPy arrays that can run on GPUs. Keras lives at tf.keras and provides the friendly API for building models.`,
+    cards: [
+      { q: "How do you import TensorFlow by convention?", a: "import tensorflow as tf" },
+      { q: "How do you convert a tensor to a NumPy array?", a: "tensor.numpy()" }
+    ],
+    exercise: {
+      prompt: "Write code that: (1) creates a 2D tensor of shape (3, 4) filled with random values, (2) computes its mean, min, max, (3) reshapes it to (4, 3), (4) multiplies every element by 2, (5) converts the result to a NumPy array. Use only TensorFlow operations.",
+      hint: "tf.random.normal((3,4)). tf.reduce_mean(t). tf.reshape(t, (4,3)). t * 2. result.numpy().",
+      solution: `import tensorflow as tf\n\nt = tf.random.normal((3, 4))\nmean_val = tf.reduce_mean(t)\nmin_val = tf.reduce_min(t)\nmax_val = tf.reduce_max(t)\nreshaped = tf.reshape(t, (4, 3))\ndoubled = reshaped * 2\nresult_np = doubled.numpy()`,
+      difficulty: 1
+    }
+  },
+  {
+    day: 3, title: "Your First Neural Network",
+    content: `A neural network is a series of layers that transform input data step by step until it produces an output. Let's build one for a simple regression problem.\n\n**The Sequential model** — the simplest way to build a network. Layers stack on top of each other like a pipeline:\n\n\`\`\`python\nfrom tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Dense\n\nmodel = Sequential([\n    Dense(64, activation='relu', input_shape=(10,)),\n    Dense(32, activation='relu'),\n    Dense(1)  # output layer\n])\n\`\`\`\n\nLet's break this down piece by piece:\n\n**Dense layer** — also called "fully connected." Every neuron connects to every neuron in the previous layer. Dense(64) means 64 neurons in this layer.\n\n**activation='relu'** — ReLU (Rectified Linear Unit) is the most common activation function. It simply outputs max(0, x) — passes positive values through and clips negatives to zero. This adds "non-linearity" which lets the network learn complex patterns.\n\n**input_shape=(10,)** — only needed on the first layer. Tells the model your data has 10 features.\n\n**The output layer** has no activation for regression (predicting a number). For classification, you'd use 'sigmoid' (binary) or 'softmax' (multi-class).\n\n**Compiling** — configure HOW the model learns:\n\n\`\`\`python\nmodel.compile(\n    optimizer='adam',      # algorithm for updating weights\n    loss='mse',            # what to minimize (mean squared error)\n    metrics=['mae']        # what to track (mean absolute error)\n)\n\`\`\`\n\n**Training:**\n\n\`\`\`python\nhistory = model.fit(\n    X_train, y_train,\n    epochs=50,             # passes through entire dataset\n    batch_size=32,         # samples per gradient update\n    validation_split=0.2   # hold out 20% for validation\n)\n\`\`\`\n\n**model.summary()** shows your architecture:\n\n\`\`\`python\nmodel.summary()\n# Shows each layer, output shape, and number of parameters\n\`\`\`\n\n**Key takeaway:** Sequential + Dense layers = your first neural network. Compile sets the optimizer and loss. Fit trains the model. Always check model.summary() to understand what you built.`,
+    cards: [
+      { q: "What does Dense(64, activation='relu') create?", a: "A fully-connected layer with 64 neurons using the ReLU activation function" },
+      { q: "What are the 3 things you set when compiling a model?", a: "optimizer (how to learn), loss (what to minimize), metrics (what to track)" }
+    ],
+    exercise: {
+      prompt: "Build a regression model: (1) Sequential with layers: Dense(128, relu), Dense(64, relu), Dense(32, relu), Dense(1). Input shape is (8,). (2) Compile with adam optimizer and mse loss, tracking mae. (3) Print model.summary(). Store the model in a variable called model.",
+      hint: "Sequential([Dense(128, activation='relu', input_shape=(8,)), ...]). model.compile(optimizer='adam', loss='mse', metrics=['mae']).",
+      solution: `from tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Dense\n\nmodel = Sequential([\n    Dense(128, activation='relu', input_shape=(8,)),\n    Dense(64, activation='relu'),\n    Dense(32, activation='relu'),\n    Dense(1)\n])\nmodel.compile(optimizer='adam', loss='mse', metrics=['mae'])\nmodel.summary()`,
+      difficulty: 2
+    }
+  },
+  {
+    day: 4, title: "Training & Validation",
+    content: `Training a neural network means adjusting its weights to minimize a loss function. Let's understand what happens during training.\n\n**Epochs** — one epoch = one pass through the entire training dataset. More epochs means more learning, but too many leads to overfitting (memorizing the training data instead of learning general patterns).\n\n**Batch size** — the model doesn't see all data at once. It processes data in batches (e.g., 32 samples at a time). Smaller batches = noisier but can generalize better. Larger batches = smoother but use more memory.\n\n**Validation split** — crucial for detecting overfitting:\n\n\`\`\`python\nhistory = model.fit(\n    X_train, y_train,\n    epochs=100,\n    batch_size=32,\n    validation_split=0.2,  # 20% of training data held out\n    verbose=1              # show progress bar\n)\n\`\`\`\n\n**The history object** records loss and metrics for every epoch:\n\n\`\`\`python\nimport matplotlib.pyplot as plt\n\n# Plot training vs validation loss\nplt.plot(history.history['loss'], label='Training Loss')\nplt.plot(history.history['val_loss'], label='Validation Loss')\nplt.xlabel('Epoch')\nplt.ylabel('Loss')\nplt.legend()\nplt.title('Training Curve')\n\`\`\`\n\n**Reading the training curve:**\n• Both lines going down = model is learning, good!\n• Training loss going down but validation loss going UP = overfitting!\n• Both lines flat = model stopped learning, might need more capacity\n\n**Evaluating on test data:**\n\n\`\`\`python\ntest_loss, test_mae = model.evaluate(X_test, y_test)\nprint(f"Test MAE: {test_mae:.4f}")\n\n# Make predictions\npredictions = model.predict(X_test)\n\`\`\`\n\n**Key takeaway:** Always use validation_split to monitor overfitting. Plot training curves — they tell the story of how your model learned. If validation loss diverges from training loss, your model is memorizing, not learning.`,
+    cards: [
+      { q: "What does it mean when validation loss goes up while training loss goes down?", a: "Overfitting — the model is memorizing training data instead of learning generalizable patterns" },
+      { q: "What does the history object contain after model.fit()?", a: "Loss and metric values for each epoch, for both training and validation sets" }
+    ],
+    exercise: {
+      prompt: "Write a function train_and_plot(model, X_train, y_train, epochs=100) that: (1) trains the model with validation_split=0.2, (2) plots training and validation loss curves on the same chart, (3) plots training and validation MAE curves on a second chart (use subplots), (4) returns the history object.",
+      hint: "history = model.fit(...). fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12,5)). history.history['loss'], history.history['val_loss'].",
+      solution: `import matplotlib.pyplot as plt\n\ndef train_and_plot(model, X_train, y_train, epochs=100):\n    history = model.fit(X_train, y_train, epochs=epochs,\n                        batch_size=32, validation_split=0.2, verbose=0)\n    \n    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))\n    \n    ax1.plot(history.history['loss'], label='Train')\n    ax1.plot(history.history['val_loss'], label='Validation')\n    ax1.set_title('Loss'); ax1.legend()\n    \n    ax2.plot(history.history['mae'], label='Train')\n    ax2.plot(history.history['val_mae'], label='Validation')\n    ax2.set_title('MAE'); ax2.legend()\n    \n    plt.tight_layout()\n    return history`,
+      difficulty: 2
+    }
+  },
+  {
+    day: 5, title: "Data Preprocessing for Neural Networks",
+    content: `Neural networks are very sensitive to the scale of input data. If one feature ranges 0-1 and another ranges 0-1000000, the model will struggle. Preprocessing is essential.\n\n**Feature scaling** — the most important preprocessing step:\n\n\`\`\`python\nfrom sklearn.preprocessing import StandardScaler\n\nscaler = StandardScaler()\nX_train_scaled = scaler.fit_transform(X_train)  # learn & apply\nX_test_scaled = scaler.transform(X_test)         # apply only!\n\`\`\`\n\nCritical: fit_transform on training data, then only transform on test data. If you fit on test data too, you're leaking information!\n\n**MinMaxScaler** normalizes to a 0-1 range instead:\n\n\`\`\`python\nfrom sklearn.preprocessing import MinMaxScaler\nscaler = MinMaxScaler()\n\`\`\`\n\n**Handling categorical data** — neural networks need numbers, not strings:\n\n\`\`\`python\n# One-hot encoding (for few categories)\nfrom tensorflow.keras.utils import to_categorical\ny_onehot = to_categorical(y_encoded)  # [0,1,2] -> [[1,0,0],[0,1,0],[0,0,1]]\n\n# Or use pandas\nX = pd.get_dummies(X, drop_first=True)\n\`\`\`\n\n**tf.data.Dataset** — efficient data pipeline for large datasets:\n\n\`\`\`python\ndataset = tf.data.Dataset.from_tensor_slices((X_train, y_train))\ndataset = dataset.shuffle(1000).batch(32).prefetch(tf.data.AUTOTUNE)\n\n# Use directly in training\nmodel.fit(dataset, epochs=10)\n\`\`\`\n\nprefetch loads the next batch while the current one is being processed — speeds up training.\n\n**A complete preprocessing pipeline:**\n\n\`\`\`python\nimport numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.model_selection import train_test_split\n\n# Split first, then scale\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)\n\nscaler = StandardScaler()\nX_train = scaler.fit_transform(X_train)\nX_test = scaler.transform(X_test)\n\n# Convert to float32 (TensorFlow's default)\nX_train = X_train.astype(np.float32)\nX_test = X_test.astype(np.float32)\n\`\`\`\n\n**Key takeaway:** Always scale your features before training. fit_transform on train, transform on test — never the other way around. Use to_categorical for classification labels.`,
+    cards: [
+      { q: "Why must you fit the scaler only on training data?", a: "To prevent data leakage — the test set should simulate unseen data" },
+      { q: "What does to_categorical([0,1,2]) produce?", a: "One-hot encoded array: [[1,0,0],[0,1,0],[0,0,1]]" }
+    ],
+    exercise: {
+      prompt: "Write a function preprocess_pipeline(df, target_col) that: (1) separates X and y, (2) one-hot encodes categorical columns in X, (3) splits 80/20, (4) applies StandardScaler to X, (5) if target has <10 unique values, one-hot encodes it (classification), (6) returns dict with X_train, X_test, y_train, y_test, scaler, and is_classification boolean.",
+      hint: "pd.get_dummies for X. y.nunique() < 10 to check classification. to_categorical for y.",
+      solution: `import pandas as pd\nimport numpy as np\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.model_selection import train_test_split\nfrom tensorflow.keras.utils import to_categorical\n\ndef preprocess_pipeline(df, target_col):\n    X = pd.get_dummies(df.drop(columns=[target_col]), drop_first=True)\n    y = df[target_col]\n    is_clf = y.nunique() < 10\n    \n    X_train, X_test, y_train, y_test = train_test_split(\n        X.values.astype(np.float32), y.values, test_size=0.2, random_state=42)\n    \n    scaler = StandardScaler()\n    X_train = scaler.fit_transform(X_train)\n    X_test = scaler.transform(X_test)\n    \n    if is_clf:\n        y_train = to_categorical(y_train)\n        y_test = to_categorical(y_test)\n    \n    return {'X_train': X_train, 'X_test': X_test,\n            'y_train': y_train, 'y_test': y_test,\n            'scaler': scaler, 'is_classification': is_clf}`,
+      difficulty: 3
+    }
+  },
+  {
+    day: 6, title: "Binary Classification",
+    content: `Classification is one of the most common ML tasks. Let's start with binary classification — predicting one of two outcomes (yes/no, spam/not spam, cat/dog).\n\nThe key differences from regression:\n\n**1. Output layer uses sigmoid activation:**\n\n\`\`\`python\nmodel = Sequential([\n    Dense(64, activation='relu', input_shape=(20,)),\n    Dense(32, activation='relu'),\n    Dense(1, activation='sigmoid')  # outputs 0-1 probability\n])\n\`\`\`\n\nSigmoid squishes any value into the 0-1 range. Output of 0.8 means "80% confident it's class 1."\n\n**2. Loss function is binary_crossentropy:**\n\n\`\`\`python\nmodel.compile(\n    optimizer='adam',\n    loss='binary_crossentropy',  # not mse!\n    metrics=['accuracy']         # % correct predictions\n)\n\`\`\`\n\nCross-entropy measures how far the predicted probabilities are from the true labels (0 or 1). It penalizes confident wrong predictions heavily.\n\n**3. Labels are 0 or 1:**\n\n\`\`\`python\n# y_train should be: [0, 1, 1, 0, 1, ...]\nhistory = model.fit(X_train, y_train, epochs=50,\n                    validation_split=0.2)\n\`\`\`\n\n**Making predictions:**\n\n\`\`\`python\n# Raw probabilities\nprobabilities = model.predict(X_test)  # [[0.92], [0.15], ...]\n\n# Convert to class labels\npredictions = (probabilities > 0.5).astype(int)  # [[1], [0], ...]\n\`\`\`\n\n**Evaluating classification models:**\n\n\`\`\`python\nfrom sklearn.metrics import classification_report, confusion_matrix\n\nprint(classification_report(y_test, predictions))\nprint(confusion_matrix(y_test, predictions))\n\`\`\`\n\nAccuracy alone can be misleading (especially with imbalanced classes). Always check precision, recall, and the confusion matrix.\n\n**Key takeaway:** Binary classification uses sigmoid output, binary_crossentropy loss, and accuracy metric. The model outputs probabilities — threshold at 0.5 to get class labels.`,
+    cards: [
+      { q: "What activation function do you use for binary classification output?", a: "sigmoid — it squishes output to 0-1 range, representing probability" },
+      { q: "Why is accuracy alone sometimes misleading?", a: "With imbalanced classes (99% one class), always predicting the majority gives 99% accuracy but is useless" }
+    ],
+    exercise: {
+      prompt: "Write a function build_binary_classifier(input_dim, hidden_units=[64,32]) that: (1) builds a Sequential model with the given hidden layers (relu) and a sigmoid output, (2) compiles with adam, binary_crossentropy, and accuracy, (3) returns the model. Then write evaluate_classifier(model, X_test, y_test) that returns a dict with accuracy, precision, recall, and f1 score.",
+      hint: "Loop through hidden_units for Dense layers. sklearn.metrics has precision_score, recall_score, f1_score.",
+      solution: `from tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Dense\nfrom sklearn.metrics import precision_score, recall_score, f1_score\nimport numpy as np\n\ndef build_binary_classifier(input_dim, hidden_units=[64, 32]):\n    layers_list = []\n    for i, units in enumerate(hidden_units):\n        if i == 0:\n            layers_list.append(Dense(units, activation='relu', input_shape=(input_dim,)))\n        else:\n            layers_list.append(Dense(units, activation='relu'))\n    layers_list.append(Dense(1, activation='sigmoid'))\n    model = Sequential(layers_list)\n    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])\n    return model\n\ndef evaluate_classifier(model, X_test, y_test):\n    probs = model.predict(X_test)\n    preds = (probs > 0.5).astype(int).flatten()\n    return {\n        'accuracy': np.mean(preds == y_test),\n        'precision': precision_score(y_test, preds),\n        'recall': recall_score(y_test, preds),\n        'f1': f1_score(y_test, preds)\n    }`,
+      difficulty: 3
+    }
+  },
+  {
+    day: 7, title: "Multi-Class Classification",
+    content: `When you have more than two categories (digits 0-9, animal species, clothing types), you need multi-class classification.\n\n**Key differences from binary:**\n\n**1. Output layer uses softmax** with one neuron per class:\n\n\`\`\`python\nnum_classes = 10\n\nmodel = Sequential([\n    Dense(128, activation='relu', input_shape=(784,)),\n    Dense(64, activation='relu'),\n    Dense(num_classes, activation='softmax')  # 10 outputs!\n])\n\`\`\`\n\nSoftmax converts the outputs into probabilities that sum to 1. If the output is [0.1, 0.05, 0.8, 0.05, ...] it means "80% confident this is class 2."\n\n**2. Labels need to be one-hot encoded:**\n\n\`\`\`python\nfrom tensorflow.keras.utils import to_categorical\n\n# Integer labels: [3, 0, 7, 2, ...]\ny_train_onehot = to_categorical(y_train, num_classes=10)\n# Now: [[0,0,0,1,0,0,0,0,0,0], [1,0,0,...], ...]\n\`\`\`\n\n**3. Loss is categorical_crossentropy:**\n\n\`\`\`python\nmodel.compile(\n    optimizer='adam',\n    loss='categorical_crossentropy',  # for one-hot labels\n    metrics=['accuracy']\n)\n\n# OR if labels are integers (not one-hot):\nmodel.compile(\n    optimizer='adam',\n    loss='sparse_categorical_crossentropy',  # for integer labels\n    metrics=['accuracy']\n)\n\`\`\`\n\nThe sparse_ version is convenient — you don't need to one-hot encode!\n\n**Making predictions:**\n\n\`\`\`python\nprobs = model.predict(X_test)      # shape: (n_samples, n_classes)\npredicted_class = np.argmax(probs, axis=1)  # pick highest probability\n\`\`\`\n\n**MNIST example** — classifying handwritten digits:\n\n\`\`\`python\n(X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()\nX_train = X_train.reshape(-1, 784) / 255.0  # flatten & normalize\nX_test = X_test.reshape(-1, 784) / 255.0\n\`\`\`\n\n**Key takeaway:** Multi-class uses softmax output (one neuron per class), categorical_crossentropy loss. Use sparse_categorical_crossentropy to skip one-hot encoding. argmax converts probabilities to class labels.`,
+    cards: [
+      { q: "What activation function outputs probabilities summing to 1?", a: "softmax — used for multi-class classification output layers" },
+      { q: "When do you use sparse_categorical_crossentropy vs categorical_crossentropy?", a: "sparse_ when labels are integers (0,1,2...), regular when labels are one-hot encoded" }
+    ],
+    exercise: {
+      prompt: "Load the MNIST dataset from keras.datasets.mnist, preprocess it (flatten to 784 features, normalize to 0-1), build a model with layers [256, 128, 64], compile with sparse_categorical_crossentropy, train for 10 epochs, and evaluate. Print test accuracy.",
+      hint: "keras.datasets.mnist.load_data(). X.reshape(-1, 784) / 255.0. Dense(10, activation='softmax').",
+      solution: `from tensorflow import keras\nfrom tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Dense\n\n(X_train, y_train), (X_test, y_test) = keras.datasets.mnist.load_data()\nX_train = X_train.reshape(-1, 784).astype('float32') / 255.0\nX_test = X_test.reshape(-1, 784).astype('float32') / 255.0\n\nmodel = Sequential([\n    Dense(256, activation='relu', input_shape=(784,)),\n    Dense(128, activation='relu'),\n    Dense(64, activation='relu'),\n    Dense(10, activation='softmax')\n])\nmodel.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])\nmodel.fit(X_train, y_train, epochs=10, batch_size=32, validation_split=0.1, verbose=1)\ntest_loss, test_acc = model.evaluate(X_test, y_test)\nprint(f"Test accuracy: {test_acc:.4f}")`,
+      difficulty: 3
+    }
+  },
+  {
+    day: 8, title: "Activation Functions Deep Dive",
+    content: `Activation functions add non-linearity to neural networks. Without them, stacking layers would just be linear math — no matter how many layers, the result would be equivalent to a single layer.\n\n**ReLU (Rectified Linear Unit)** — the default choice for hidden layers:\n\n\`\`\`python\n# f(x) = max(0, x)\n# Positive values pass through, negatives become 0\nDense(64, activation='relu')\n\`\`\`\n\nPros: fast, works well in practice. Cons: "dying ReLU" problem — neurons can get stuck outputting 0.\n\n**Leaky ReLU** — fixes the dying ReLU problem:\n\n\`\`\`python\nfrom tensorflow.keras.layers import LeakyReLU\n\n# f(x) = x if x > 0, else 0.01 * x\nmodel.add(Dense(64))\nmodel.add(LeakyReLU(alpha=0.01))\n\`\`\`\n\n**Sigmoid** — squishes to 0-1. Used for binary classification output:\n\n\`\`\`python\n# f(x) = 1 / (1 + e^(-x))\nDense(1, activation='sigmoid')\n\`\`\`\n\n**Softmax** — outputs probabilities summing to 1. Used for multi-class output:\n\n\`\`\`python\nDense(10, activation='softmax')\n\`\`\`\n\n**Tanh** — squishes to -1 to 1. Sometimes better than sigmoid for hidden layers:\n\n\`\`\`python\nDense(64, activation='tanh')\n\`\`\`\n\n**Quick reference:**\n• Hidden layers → ReLU (or LeakyReLU)\n• Binary output → sigmoid\n• Multi-class output → softmax\n• Regression output → none (linear)\n\n\`\`\`python\n# Regression model\nmodel = Sequential([\n    Dense(64, activation='relu', input_shape=(10,)),  # hidden\n    Dense(32, activation='relu'),                      # hidden\n    Dense(1)                                           # output: no activation\n])\n\n# Classification model\nmodel = Sequential([\n    Dense(64, activation='relu', input_shape=(10,)),  # hidden\n    Dense(32, activation='relu'),                      # hidden\n    Dense(3, activation='softmax')                     # output: 3 classes\n])\n\`\`\`\n\n**Key takeaway:** ReLU for hidden layers, sigmoid for binary output, softmax for multi-class output, no activation for regression output. This covers 95% of cases.`,
+    cards: [
+      { q: "What activation for hidden layers, and why?", a: "ReLU — it's fast, avoids vanishing gradients, and works well in practice" },
+      { q: "What's the dying ReLU problem?", a: "Neurons output 0 for all inputs and stop learning. Leaky ReLU fixes this." }
+    ],
+    exercise: {
+      prompt: "Build two models for the same MNIST task: one using all relu hidden layers, one using LeakyReLU(0.1). Train both for 5 epochs and compare validation accuracy. Write this as a function compare_activations(X_train, y_train) that returns a dict with both histories.",
+      hint: "For LeakyReLU, add Dense(64) then LeakyReLU(alpha=0.1) as separate layers in Sequential.",
+      solution: `from tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Dense, LeakyReLU\n\ndef compare_activations(X_train, y_train):\n    relu_model = Sequential([\n        Dense(128, activation='relu', input_shape=(X_train.shape[1],)),\n        Dense(64, activation='relu'),\n        Dense(10, activation='softmax')\n    ])\n    relu_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])\n    relu_hist = relu_model.fit(X_train, y_train, epochs=5, validation_split=0.2, verbose=0)\n    \n    leaky_model = Sequential([\n        Dense(128, input_shape=(X_train.shape[1],)),\n        LeakyReLU(alpha=0.1),\n        Dense(64),\n        LeakyReLU(alpha=0.1),\n        Dense(10, activation='softmax')\n    ])\n    leaky_model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])\n    leaky_hist = leaky_model.fit(X_train, y_train, epochs=5, validation_split=0.2, verbose=0)\n    \n    return {'relu': relu_hist, 'leaky_relu': leaky_hist}`,
+      difficulty: 3
+    }
+  },
+  {
+    day: 9, title: "Optimizers & Learning Rate",
+    content: `The optimizer controls HOW the model updates its weights during training. The learning rate controls HOW MUCH to change at each step.\n\n**Think of it like walking down a hill blindfolded.** The optimizer is your strategy for finding the lowest point. The learning rate is your step size.\n\n**Adam** — the go-to optimizer. Adaptive learning rate per parameter:\n\n\`\`\`python\nmodel.compile(optimizer='adam', loss='mse')  # default lr=0.001\n\n# Custom learning rate\nfrom tensorflow.keras.optimizers import Adam\nmodel.compile(optimizer=Adam(learning_rate=0.0001), loss='mse')\n\`\`\`\n\n**SGD** — Stochastic Gradient Descent. Simpler, sometimes better with momentum:\n\n\`\`\`python\nfrom tensorflow.keras.optimizers import SGD\nmodel.compile(optimizer=SGD(learning_rate=0.01, momentum=0.9), loss='mse')\n\`\`\`\n\n**Learning rate effects:**\n• Too high → model overshoots, loss jumps around, never converges\n• Too low → model learns very slowly, might get stuck\n• Just right → smooth decrease in loss\n\n**Learning rate scheduling** — start high and decrease over time:\n\n\`\`\`python\n# Reduce LR when validation loss stops improving\nfrom tensorflow.keras.callbacks import ReduceLROnPlateau\n\nlr_scheduler = ReduceLROnPlateau(\n    monitor='val_loss',\n    factor=0.5,       # multiply LR by 0.5\n    patience=5,       # wait 5 epochs before reducing\n    min_lr=1e-6       # don't go below this\n)\n\nmodel.fit(X_train, y_train, epochs=100,\n          validation_split=0.2, callbacks=[lr_scheduler])\n\`\`\`\n\n**Practical advice:**\n• Start with Adam at default lr=0.001\n• If loss is jumping around → reduce LR\n• If loss decreases very slowly → increase LR\n• Use ReduceLROnPlateau callback for automatic scheduling\n\n**Key takeaway:** Adam with default settings is your starting point. Learning rate is the most important hyperparameter. Use ReduceLROnPlateau to automatically tune it during training.`,
+    cards: [
+      { q: "What happens if learning rate is too high?", a: "Loss jumps around erratically and never converges" },
+      { q: "What optimizer should you start with?", a: "Adam with default learning_rate=0.001" }
+    ],
+    exercise: {
+      prompt: "Write a function experiment_lr(X_train, y_train, learning_rates=[0.1, 0.01, 0.001, 0.0001]) that trains the same architecture with each learning rate for 20 epochs and returns a dict mapping each LR to its final validation loss. Use a simple 2-layer model.",
+      hint: "Loop through learning_rates. For each, build a fresh model, compile with Adam(learning_rate=lr), train, and record history.history['val_loss'][-1].",
+      solution: `from tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Dense\nfrom tensorflow.keras.optimizers import Adam\n\ndef experiment_lr(X_train, y_train, learning_rates=[0.1, 0.01, 0.001, 0.0001]):\n    results = {}\n    for lr in learning_rates:\n        model = Sequential([\n            Dense(64, activation='relu', input_shape=(X_train.shape[1],)),\n            Dense(32, activation='relu'),\n            Dense(1)\n        ])\n        model.compile(optimizer=Adam(learning_rate=lr), loss='mse')\n        h = model.fit(X_train, y_train, epochs=20,\n                      validation_split=0.2, verbose=0)\n        results[lr] = h.history['val_loss'][-1]\n    return results`,
+      difficulty: 3
+    }
+  },
+  {
+    day: 10, title: "Regularization & Dropout",
+    content: `Overfitting is the #1 problem in deep learning. Your model performs great on training data but poorly on new data. Regularization techniques fight this.\n\n**Dropout** — the simplest and most effective technique. During training, randomly "turns off" a percentage of neurons each step:\n\n\`\`\`python\nfrom tensorflow.keras.layers import Dropout\n\nmodel = Sequential([\n    Dense(256, activation='relu', input_shape=(784,)),\n    Dropout(0.3),     # randomly drop 30% of neurons\n    Dense(128, activation='relu'),\n    Dropout(0.3),\n    Dense(10, activation='softmax')\n])\n\`\`\`\n\nWhy does this work? It forces the network to not rely on any single neuron — spreading the learning across all neurons. It's like training an ensemble of smaller networks.\n\nDropout is only active during training. During prediction, all neurons are used.\n\n**L2 Regularization (Weight Decay)** — penalizes large weights:\n\n\`\`\`python\nfrom tensorflow.keras.regularizers import l2\n\nDense(64, activation='relu', kernel_regularizer=l2(0.01))\n# 0.01 controls the penalty strength\n\`\`\`\n\n**Early Stopping** — stop training when validation loss stops improving:\n\n\`\`\`python\nfrom tensorflow.keras.callbacks import EarlyStopping\n\nearly_stop = EarlyStopping(\n    monitor='val_loss',\n    patience=10,          # wait 10 epochs for improvement\n    restore_best_weights=True  # go back to best model!\n)\n\nmodel.fit(X_train, y_train, epochs=500,  # set high, early stop will cut it\n          validation_split=0.2, callbacks=[early_stop])\n\`\`\`\n\nrestore_best_weights=True is crucial — without it, you get the model from the last epoch, which might be worse than the best epoch.\n\n**Batch Normalization** — normalizes layer outputs, stabilizes training:\n\n\`\`\`python\nfrom tensorflow.keras.layers import BatchNormalization\n\nmodel = Sequential([\n    Dense(128, activation='relu', input_shape=(784,)),\n    BatchNormalization(),\n    Dropout(0.3),\n    Dense(64, activation='relu'),\n    BatchNormalization(),\n    Dense(10, activation='softmax')\n])\n\`\`\`\n\n**Key takeaway:** Use Dropout (0.2-0.5) between hidden layers. Always use EarlyStopping with restore_best_weights=True. Add BatchNormalization for more stable training.`,
+    cards: [
+      { q: "What does Dropout(0.3) do during training?", a: "Randomly deactivates 30% of neurons each training step to prevent overfitting" },
+      { q: "Why use restore_best_weights=True in EarlyStopping?", a: "It returns the model from the epoch with lowest validation loss, not the last epoch" }
+    ],
+    exercise: {
+      prompt: "Build a function build_regularized_model(input_dim, num_classes) that creates a robust model with: 3 hidden layers (256, 128, 64), BatchNormalization after each, Dropout(0.3), L2 regularization(0.001), compiled with adam. Also return an EarlyStopping callback with patience=10 and ReduceLROnPlateau. Return (model, callbacks_list).",
+      hint: "kernel_regularizer=l2(0.001) in Dense. Callbacks as a list.",
+      solution: `from tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Dense, Dropout, BatchNormalization\nfrom tensorflow.keras.regularizers import l2\nfrom tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau\n\ndef build_regularized_model(input_dim, num_classes):\n    model = Sequential([\n        Dense(256, activation='relu', input_shape=(input_dim,), kernel_regularizer=l2(0.001)),\n        BatchNormalization(),\n        Dropout(0.3),\n        Dense(128, activation='relu', kernel_regularizer=l2(0.001)),\n        BatchNormalization(),\n        Dropout(0.3),\n        Dense(64, activation='relu', kernel_regularizer=l2(0.001)),\n        BatchNormalization(),\n        Dropout(0.3),\n        Dense(num_classes, activation='softmax')\n    ])\n    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])\n    \n    callbacks = [\n        EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True),\n        ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)\n    ]\n    return model, callbacks`,
+      difficulty: 4
+    }
+  },
+  {
+    day: 11, title: "Saving & Loading Models",
+    content: `Training a model can take hours or days. You need to save your work and reload it later — for predictions, sharing, or continuing training.\n\n**Save the entire model** (architecture + weights + optimizer):\n\n\`\`\`python\n# Save in Keras native format (recommended)\nmodel.save('my_model.keras')\n\n# Load it back\nfrom tensorflow.keras.models import load_model\nloaded_model = load_model('my_model.keras')\n\n# It works immediately\npredictions = loaded_model.predict(X_test)\n\`\`\`\n\n**Save only the weights** (lighter, but you need the architecture code):\n\n\`\`\`python\nmodel.save_weights('model_weights.weights.h5')\n\n# To load: rebuild the same architecture first, then load weights\nnew_model = build_my_model()  # your function that creates the model\nnew_model.load_weights('model_weights.weights.h5')\n\`\`\`\n\n**ModelCheckpoint callback** — automatically save during training:\n\n\`\`\`python\nfrom tensorflow.keras.callbacks import ModelCheckpoint\n\ncheckpoint = ModelCheckpoint(\n    'best_model.keras',\n    monitor='val_loss',\n    save_best_only=True,    # only save when val_loss improves\n    verbose=1\n)\n\nmodel.fit(X_train, y_train, epochs=100,\n          validation_split=0.2, callbacks=[checkpoint])\n\n# After training, load the best version\nbest_model = load_model('best_model.keras')\n\`\`\`\n\n**Combining callbacks** — a production-ready training setup:\n\n\`\`\`python\ncallbacks = [\n    ModelCheckpoint('best_model.keras', monitor='val_loss',\n                    save_best_only=True),\n    EarlyStopping(patience=15, restore_best_weights=True),\n    ReduceLROnPlateau(factor=0.5, patience=5)\n]\n\nhistory = model.fit(X_train, y_train, epochs=500,\n                    validation_split=0.2, callbacks=callbacks)\n\`\`\`\n\n**Key takeaway:** Use model.save() for full models, save_weights() for just weights. ModelCheckpoint with save_best_only=True automatically keeps your best model during training.`,
+    cards: [
+      { q: "How do you save and load a complete Keras model?", a: "model.save('path.keras') and load_model('path.keras')" },
+      { q: "What does save_best_only=True do in ModelCheckpoint?", a: "Only overwrites the saved model when validation metric improves" }
+    ],
+    exercise: {
+      prompt: "Write a function train_with_checkpoints(model, X_train, y_train, save_path='best.keras') that trains with: ModelCheckpoint (save best), EarlyStopping (patience 15), ReduceLROnPlateau. Returns (history, best_model) where best_model is loaded from the checkpoint.",
+      hint: "Create callbacks list. model.fit with callbacks. load_model(save_path) at the end.",
+      solution: `from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau\nfrom tensorflow.keras.models import load_model\n\ndef train_with_checkpoints(model, X_train, y_train, save_path='best.keras'):\n    callbacks = [\n        ModelCheckpoint(save_path, monitor='val_loss', save_best_only=True, verbose=1),\n        EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True),\n        ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, verbose=1)\n    ]\n    history = model.fit(X_train, y_train, epochs=500,\n                        batch_size=32, validation_split=0.2,\n                        callbacks=callbacks, verbose=1)\n    best_model = load_model(save_path)\n    return history, best_model`,
+      difficulty: 3
+    }
+  },
+  {
+    day: 12, title: "Functional API",
+    content: `The Sequential model is great for simple stacks of layers. But for anything more complex — multiple inputs, skip connections, shared layers — you need the Functional API.\n\n**Sequential vs Functional:**\n\n\`\`\`python\n# Sequential — layers in a straight line\nmodel = Sequential([Dense(64), Dense(32), Dense(1)])\n\n# Functional — explicit connections between layers\ninputs = keras.Input(shape=(10,))\nx = Dense(64, activation='relu')(inputs)\nx = Dense(32, activation='relu')(x)\noutputs = Dense(1)(x)\nmodel = keras.Model(inputs=inputs, outputs=outputs)\n\`\`\`\n\nThe Functional API works by calling layers like functions — each layer takes the previous output as input.\n\n**Skip connections** — connect a layer to one further ahead (like ResNets):\n\n\`\`\`python\ninputs = keras.Input(shape=(64,))\nx = Dense(64, activation='relu')(inputs)\nx = Dense(64, activation='relu')(x)\n\n# Skip connection: add original input to output\nfrom tensorflow.keras.layers import Add\nx = Add()([x, inputs])  # residual connection!\n\noutputs = Dense(1)(x)\nmodel = keras.Model(inputs=inputs, outputs=outputs)\n\`\`\`\n\n**Multiple inputs:**\n\n\`\`\`python\n# Text features + numeric features\ntext_input = keras.Input(shape=(100,), name='text')\nnumeric_input = keras.Input(shape=(5,), name='numeric')\n\nx1 = Dense(32, activation='relu')(text_input)\nx2 = Dense(16, activation='relu')(numeric_input)\n\nfrom tensorflow.keras.layers import Concatenate\nmerged = Concatenate()([x1, x2])\noutputs = Dense(1, activation='sigmoid')(merged)\n\nmodel = keras.Model(inputs=[text_input, numeric_input], outputs=outputs)\n\`\`\`\n\n**Multiple outputs:**\n\n\`\`\`python\ninputs = keras.Input(shape=(784,))\nx = Dense(128, activation='relu')(inputs)\n\n# Two different predictions from same features\nclass_output = Dense(10, activation='softmax', name='class')(x)\nquality_output = Dense(1, activation='sigmoid', name='quality')(x)\n\nmodel = keras.Model(inputs=inputs, outputs=[class_output, quality_output])\nmodel.compile(optimizer='adam',\n              loss={'class': 'sparse_categorical_crossentropy',\n                    'quality': 'binary_crossentropy'})\n\`\`\`\n\n**Key takeaway:** Use Functional API when you need multiple inputs/outputs, skip connections, or shared layers. The pattern is: define Input → chain layers → create Model(inputs, outputs).`,
+    cards: [
+      { q: "When should you use Functional API over Sequential?", a: "When you need multiple inputs/outputs, skip connections, or branching architectures" },
+      { q: "How do you create a skip/residual connection?", a: "Use Add()([layer_output, earlier_output]) to sum them" }
+    ],
+    exercise: {
+      prompt: "Build a multi-input model using Functional API: (1) numeric_input with shape (10,) goes through Dense(32, relu), (2) categorical_input with shape (5,) goes through Dense(16, relu), (3) concatenate both, (4) two hidden layers (64, 32 relu), (5) output Dense(1) for regression. Compile with adam/mse. Return model.",
+      hint: "keras.Input for each. Concatenate()([x1, x2]). keras.Model(inputs=[...], outputs=...).",
+      solution: `from tensorflow import keras\nfrom tensorflow.keras.layers import Dense, Concatenate, Input\n\ndef build_multi_input_model():\n    numeric_input = Input(shape=(10,), name='numeric')\n    categorical_input = Input(shape=(5,), name='categorical')\n    \n    x1 = Dense(32, activation='relu')(numeric_input)\n    x2 = Dense(16, activation='relu')(categorical_input)\n    \n    merged = Concatenate()([x1, x2])\n    x = Dense(64, activation='relu')(merged)\n    x = Dense(32, activation='relu')(x)\n    outputs = Dense(1)(x)\n    \n    model = keras.Model(inputs=[numeric_input, categorical_input], outputs=outputs)\n    model.compile(optimizer='adam', loss='mse', metrics=['mae'])\n    return model`,
+      difficulty: 4
+    }
+  },
+  {
+    day: 13, title: "Intro to CNNs — Convolutional Neural Networks",
+    content: `CNNs are designed for image data. Instead of looking at every pixel independently, they look at local patterns (edges, textures, shapes) and build up to complex features.\n\n**Why CNNs for images?** A 28x28 image has 784 pixels. With a Dense layer, that's 784 × neurons connections — and it ignores spatial structure. CNNs use small filters that slide across the image, preserving spatial relationships.\n\n**The Conv2D layer** — the core building block:\n\n\`\`\`python\nfrom tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten\n\nmodel = Sequential([\n    Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),\n    MaxPooling2D((2, 2)),\n    Conv2D(64, (3, 3), activation='relu'),\n    MaxPooling2D((2, 2)),\n    Flatten(),\n    Dense(64, activation='relu'),\n    Dense(10, activation='softmax')\n])\n\`\`\`\n\nLet's break this down:\n\n**Conv2D(32, (3, 3))** — 32 filters, each 3x3 pixels. Each filter learns to detect one pattern (horizontal edge, corner, etc.). The output is 32 "feature maps."\n\n**MaxPooling2D((2, 2))** — shrinks each feature map by half (takes the max value in each 2x2 block). This reduces computation and makes features position-invariant.\n\n**Flatten()** — converts the 2D feature maps into a 1D vector so Dense layers can process it.\n\n**Input shape for images:**\n\n\`\`\`python\n# Grayscale: (height, width, 1)\ninput_shape=(28, 28, 1)\n\n# Color (RGB): (height, width, 3)\ninput_shape=(224, 224, 3)\n\`\`\`\n\n**The image needs to be reshaped:**\n\n\`\`\`python\n# MNIST images come as (28, 28)\n# CNN needs (28, 28, 1) — add channel dimension\nX_train = X_train.reshape(-1, 28, 28, 1) / 255.0\n\`\`\`\n\n**Key takeaway:** CNNs use Conv2D to detect local patterns and MaxPooling2D to downsample. The architecture is: Conv → Pool → Conv → Pool → Flatten → Dense → Output.`,
+    cards: [
+      { q: "What does Conv2D(32, (3, 3)) do?", a: "Applies 32 learnable 3x3 filters that slide across the image to detect local patterns" },
+      { q: "Why use MaxPooling2D?", a: "Reduces spatial dimensions (downsampling), decreases computation, and adds some translation invariance" }
+    ],
+    exercise: {
+      prompt: "Build a CNN for MNIST digit classification: Conv2D(32, 3x3, relu) → MaxPool(2x2) → Conv2D(64, 3x3, relu) → MaxPool(2x2) → Conv2D(64, 3x3, relu) → Flatten → Dense(64, relu) → Dense(10, softmax). Input shape (28,28,1). Compile and print summary.",
+      hint: "Sequential model. Don't forget input_shape on first Conv2D only.",
+      solution: `from tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense\n\nmodel = Sequential([\n    Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),\n    MaxPooling2D((2, 2)),\n    Conv2D(64, (3, 3), activation='relu'),\n    MaxPooling2D((2, 2)),\n    Conv2D(64, (3, 3), activation='relu'),\n    Flatten(),\n    Dense(64, activation='relu'),\n    Dense(10, activation='softmax')\n])\nmodel.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])\nmodel.summary()`,
+      difficulty: 3
+    }
+  },
+  {
+    day: 14, title: "CNN Training & Data Augmentation",
+    content: `Training a CNN on images benefits hugely from data augmentation — artificially expanding your dataset by applying random transformations.\n\n**Data Augmentation** — create variations of existing images:\n\n\`\`\`python\nfrom tensorflow.keras.layers import RandomFlip, RandomRotation, RandomZoom\n\n# Add augmentation as layers in the model (Keras 3 style)\ndata_augmentation = Sequential([\n    RandomFlip("horizontal"),\n    RandomRotation(0.1),      # rotate up to 10%\n    RandomZoom(0.1),          # zoom up to 10%\n])\n\nmodel = Sequential([\n    data_augmentation,              # augment during training only\n    Conv2D(32, (3,3), activation='relu'),\n    MaxPooling2D((2,2)),\n    Conv2D(64, (3,3), activation='relu'),\n    MaxPooling2D((2,2)),\n    Flatten(),\n    Dense(64, activation='relu'),\n    Dropout(0.5),\n    Dense(10, activation='softmax')\n])\n\`\`\`\n\nAugmentation layers are only active during training — they're skipped during prediction.\n\n**Alternatively, use ImageDataGenerator** (older but still common):\n\n\`\`\`python\nfrom tensorflow.keras.preprocessing.image import ImageDataGenerator\n\ndatagen = ImageDataGenerator(\n    rotation_range=15,\n    width_shift_range=0.1,\n    height_shift_range=0.1,\n    horizontal_flip=True,\n    zoom_range=0.1\n)\n\n# Train with augmented data\nmodel.fit(datagen.flow(X_train, y_train, batch_size=32),\n          epochs=50, validation_data=(X_test, y_test))\n\`\`\`\n\n**Practical CNN training tips:**\n\n\`\`\`python\n# 1. Always normalize pixel values\nX_train = X_train / 255.0\n\n# 2. Use Dropout before Dense layers\nmodel.add(Dropout(0.5))  # aggressive for small datasets\n\n# 3. Use callbacks\ncallbacks = [\n    EarlyStopping(patience=10, restore_best_weights=True),\n    ReduceLROnPlateau(factor=0.5, patience=3)\n]\n\`\`\`\n\n**Key takeaway:** Data augmentation creates training image variations for free, significantly reducing overfitting. Normalize pixels to 0-1. Use Dropout before Dense layers and EarlyStopping.`,
+    cards: [
+      { q: "What is data augmentation and why use it?", a: "Randomly transforming training images (flip, rotate, zoom) to create more diverse training data and reduce overfitting" },
+      { q: "Are augmentation layers active during prediction?", a: "No — they only apply random transforms during training, not during inference" }
+    ],
+    exercise: {
+      prompt: "Write a function build_augmented_cnn(input_shape, num_classes) that: (1) adds augmentation layers (flip, rotation, zoom), (2) has 3 Conv2D+MaxPool blocks (32, 64, 128 filters), (3) BatchNorm after each conv, (4) Flatten + Dense(256) + Dropout(0.5) + output. Compile and return model.",
+      hint: "Sequential with RandomFlip, RandomRotation, RandomZoom first, then Conv2D blocks.",
+      solution: `from tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import (Conv2D, MaxPooling2D, Flatten, Dense,\n    Dropout, BatchNormalization, RandomFlip, RandomRotation, RandomZoom)\n\ndef build_augmented_cnn(input_shape, num_classes):\n    model = Sequential([\n        RandomFlip('horizontal', input_shape=input_shape),\n        RandomRotation(0.1),\n        RandomZoom(0.1),\n        \n        Conv2D(32, (3,3), activation='relu'),\n        BatchNormalization(),\n        MaxPooling2D((2,2)),\n        \n        Conv2D(64, (3,3), activation='relu'),\n        BatchNormalization(),\n        MaxPooling2D((2,2)),\n        \n        Conv2D(128, (3,3), activation='relu'),\n        BatchNormalization(),\n        MaxPooling2D((2,2)),\n        \n        Flatten(),\n        Dense(256, activation='relu'),\n        Dropout(0.5),\n        Dense(num_classes, activation='softmax')\n    ])\n    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])\n    return model`,
+      difficulty: 4
+    }
+  },
+  {
+    day: 15, title: "Transfer Learning",
+    content: `Training a CNN from scratch requires thousands of images and lots of compute. Transfer learning lets you use a pre-trained model (trained on millions of images) and adapt it to your task — even with just a few hundred images.\n\n**The idea:** A model trained on ImageNet (14M images, 1000 classes) has already learned to detect edges, textures, shapes, and objects. You reuse those learned features and only retrain the final layers for your specific task.\n\n**Step 1: Load a pre-trained model:**\n\n\`\`\`python\nfrom tensorflow.keras.applications import MobileNetV2\n\nbase_model = MobileNetV2(\n    weights='imagenet',       # use pre-trained weights\n    include_top=False,         # remove the classification head\n    input_shape=(224, 224, 3)  # standard image size\n)\n\n# Freeze the base — don't update its weights\nbase_model.trainable = False\n\`\`\`\n\n**Step 2: Add your own classification head:**\n\n\`\`\`python\nfrom tensorflow.keras.layers import GlobalAveragePooling2D\n\nmodel = Sequential([\n    base_model,\n    GlobalAveragePooling2D(),  # reduce feature maps to vector\n    Dense(128, activation='relu'),\n    Dropout(0.3),\n    Dense(num_classes, activation='softmax')\n])\n\nmodel.compile(optimizer=Adam(learning_rate=0.001),\n              loss='sparse_categorical_crossentropy',\n              metrics=['accuracy'])\n\`\`\`\n\n**Step 3: Fine-tuning** (optional, after initial training):\n\n\`\`\`python\n# Unfreeze the last few layers of the base model\nbase_model.trainable = True\nfor layer in base_model.layers[:-20]:\n    layer.trainable = False  # keep early layers frozen\n\n# Recompile with a VERY low learning rate\nmodel.compile(optimizer=Adam(learning_rate=1e-5),\n              loss='sparse_categorical_crossentropy',\n              metrics=['accuracy'])\n\n# Continue training\nmodel.fit(X_train, y_train, epochs=10, validation_split=0.2)\n\`\`\`\n\n**Popular pre-trained models:**\n• MobileNetV2 — lightweight, good for mobile\n• ResNet50 — balanced accuracy/speed\n• EfficientNet — best accuracy per parameter\n• VGG16 — simple, classic\n\n**Key takeaway:** Transfer learning = load pre-trained base → freeze it → add your head → train head → optionally fine-tune top layers with very low LR. This is how most real-world image classifiers are built.`,
+    cards: [
+      { q: "What does include_top=False do when loading a pre-trained model?", a: "Removes the final classification layers so you can add your own for a different task" },
+      { q: "Why use a very low learning rate when fine-tuning?", a: "To make small adjustments to pre-trained weights without destroying the already-learned features" }
+    ],
+    exercise: {
+      prompt: "Write a function build_transfer_model(num_classes, fine_tune_layers=0) that: (1) loads MobileNetV2 as base (frozen), (2) adds GlobalAveragePooling2D + Dense(256, relu) + Dropout(0.5) + output, (3) if fine_tune_layers > 0, unfreezes that many final layers with lr=1e-5, otherwise uses lr=0.001. Return compiled model.",
+      hint: "base_model.trainable = False. If fine_tune_layers > 0: base_model.trainable = True then freeze layers[:-fine_tune_layers].",
+      solution: `from tensorflow.keras.applications import MobileNetV2\nfrom tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout\nfrom tensorflow.keras.optimizers import Adam\n\ndef build_transfer_model(num_classes, fine_tune_layers=0):\n    base_model = MobileNetV2(weights='imagenet', include_top=False,\n                             input_shape=(224, 224, 3))\n    base_model.trainable = False\n    \n    lr = 0.001\n    if fine_tune_layers > 0:\n        base_model.trainable = True\n        for layer in base_model.layers[:-fine_tune_layers]:\n            layer.trainable = False\n        lr = 1e-5\n    \n    model = Sequential([\n        base_model,\n        GlobalAveragePooling2D(),\n        Dense(256, activation='relu'),\n        Dropout(0.5),\n        Dense(num_classes, activation='softmax')\n    ])\n    model.compile(optimizer=Adam(learning_rate=lr),\n                  loss='sparse_categorical_crossentropy', metrics=['accuracy'])\n    return model`,
+      difficulty: 4
+    }
+  },
+  { day: 16, title: "Custom Callbacks & TensorBoard", content: `Callbacks let you hook into the training process. TensorBoard gives you interactive visualizations.\n\n**Custom callback** — run any code at specific training events:\n\n\`\`\`python\nclass PrintLR(keras.callbacks.Callback):\n    def on_epoch_end(self, epoch, logs=None):\n        lr = self.model.optimizer.learning_rate.numpy()\n        print(f"Epoch {epoch+1}: LR = {lr:.6f}, Loss = {logs['loss']:.4f}")\n\`\`\`\n\n**TensorBoard** — interactive training dashboard:\n\n\`\`\`python\nfrom tensorflow.keras.callbacks import TensorBoard\nimport datetime\n\nlog_dir = "logs/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")\ntb_callback = TensorBoard(log_dir=log_dir, histogram_freq=1)\n\nmodel.fit(X_train, y_train, epochs=50,\n          callbacks=[tb_callback])\n\n# In terminal: tensorboard --logdir logs/\n# Opens interactive dashboard in browser\n\`\`\`\n\n**Combining all callbacks for production training:**\n\n\`\`\`python\ncallbacks = [\n    ModelCheckpoint('best.keras', save_best_only=True),\n    EarlyStopping(patience=15, restore_best_weights=True),\n    ReduceLROnPlateau(factor=0.5, patience=5),\n    TensorBoard(log_dir='logs/'),\n]\n\`\`\`\n\n**Key takeaway:** Callbacks control training behavior. Use ModelCheckpoint + EarlyStopping + ReduceLROnPlateau as your default set. Add TensorBoard for visual debugging.`, cards: [ { q: "What method do you override for custom logic at epoch end?", a: "on_epoch_end(self, epoch, logs) in a keras.callbacks.Callback subclass" }, { q: "How do you launch TensorBoard?", a: "tensorboard --logdir logs/ in the terminal, then open the URL in a browser" } ], exercise: { prompt: "Create a custom callback TimingCallback that records the time each epoch takes and stores results in a list. It should have a self.times attribute accessible after training. Also write a function get_training_callbacks(save_path) that returns a list of ModelCheckpoint, EarlyStopping, ReduceLROnPlateau, and your TimingCallback.", hint: "import time. Set self.epoch_start in on_epoch_begin, compute delta in on_epoch_end.", solution: `import time\nfrom tensorflow import keras\nfrom tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau\n\nclass TimingCallback(keras.callbacks.Callback):\n    def __init__(self):\n        super().__init__()\n        self.times = []\n    def on_epoch_begin(self, epoch, logs=None):\n        self.epoch_start = time.time()\n    def on_epoch_end(self, epoch, logs=None):\n        self.times.append(time.time() - self.epoch_start)\n\ndef get_training_callbacks(save_path='best.keras'):\n    return [\n        ModelCheckpoint(save_path, monitor='val_loss', save_best_only=True),\n        EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True),\n        ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5),\n        TimingCallback()\n    ]`, difficulty: 4 } },
+  { day: 17, title: "Text Preprocessing & Embeddings", content: `Neural networks need numbers, not words. Text preprocessing converts raw text into numerical representations the model can learn from.\n\n**Tokenization** — convert words to integer IDs:\n\n\`\`\`python\nfrom tensorflow.keras.preprocessing.text import Tokenizer\n\ntokenizer = Tokenizer(num_words=10000)  # keep top 10k words\ntokenizer.fit_on_texts(train_texts)\n\n# Convert text to sequences of integers\nsequences = tokenizer.texts_to_sequences(train_texts)\n# "I love ML" -> [4, 15, 203]\n\`\`\`\n\n**Padding** — make all sequences the same length:\n\n\`\`\`python\nfrom tensorflow.keras.preprocessing.sequence import pad_sequences\n\npadded = pad_sequences(sequences, maxlen=200, padding='post')\n# Short sequences get zeros added at the end\n# Long sequences get truncated\n\`\`\`\n\n**Embedding layer** — learns a dense vector for each word:\n\n\`\`\`python\nfrom tensorflow.keras.layers import Embedding\n\nmodel = Sequential([\n    Embedding(input_dim=10000,    # vocabulary size\n              output_dim=128,      # embedding dimensions\n              input_length=200),   # sequence length\n    # Each word becomes a 128-dimensional vector\n    # The model LEARNS these vectors during training\n])\n\`\`\`\n\nEmbeddings capture meaning — words with similar meanings get similar vectors. "king" and "queen" will be close together in embedding space.\n\n**A complete text classification pipeline:**\n\n\`\`\`python\nmodel = Sequential([\n    Embedding(10000, 128, input_length=200),\n    GlobalAveragePooling1D(),  # average all word vectors\n    Dense(64, activation='relu'),\n    Dropout(0.5),\n    Dense(1, activation='sigmoid')  # positive/negative\n])\n\`\`\`\n\n**Key takeaway:** Tokenizer converts words to numbers. Pad sequences to equal length. Embedding layer learns word representations. GlobalAveragePooling1D reduces sequence to a single vector.`, cards: [ { q: "What does an Embedding layer do?", a: "Converts integer word IDs into dense learned vectors that capture semantic meaning" }, { q: "Why do you need to pad sequences?", a: "Neural networks need fixed-size inputs — padding makes all sequences the same length" } ], exercise: { prompt: "Write a function build_text_classifier(vocab_size=10000, max_len=200, embed_dim=128) that builds a Sequential model: Embedding → GlobalAveragePooling1D → Dense(64, relu) → Dropout(0.5) → Dense(1, sigmoid). Compile for binary classification and return model.", hint: "from tensorflow.keras.layers import Embedding, GlobalAveragePooling1D.", solution: `from tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Embedding, GlobalAveragePooling1D, Dense, Dropout\n\ndef build_text_classifier(vocab_size=10000, max_len=200, embed_dim=128):\n    model = Sequential([\n        Embedding(vocab_size, embed_dim, input_length=max_len),\n        GlobalAveragePooling1D(),\n        Dense(64, activation='relu'),\n        Dropout(0.5),\n        Dense(1, activation='sigmoid')\n    ])\n    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])\n    return model`, difficulty: 3 } },
+  { day: 18, title: "Recurrent Neural Networks (RNNs)", content: `RNNs process sequential data — text, time series, audio — by maintaining a "memory" of what they've seen so far. Each step feeds into the next.\n\n**SimpleRNN** — the basic version:\n\n\`\`\`python\nfrom tensorflow.keras.layers import SimpleRNN\n\nmodel = Sequential([\n    Embedding(10000, 64, input_length=200),\n    SimpleRNN(64),           # processes sequence step by step\n    Dense(1, activation='sigmoid')\n])\n\`\`\`\n\n**LSTM (Long Short-Term Memory)** — much better at remembering long-range patterns:\n\n\`\`\`python\nfrom tensorflow.keras.layers import LSTM\n\nmodel = Sequential([\n    Embedding(10000, 64, input_length=200),\n    LSTM(64),\n    Dense(1, activation='sigmoid')\n])\n\`\`\`\n\nLSTMs have "gates" that control what to remember and what to forget. They solve the "vanishing gradient" problem that plagues SimpleRNNs.\n\n**Bidirectional** — process the sequence both forward AND backward:\n\n\`\`\`python\nfrom tensorflow.keras.layers import Bidirectional\n\nmodel = Sequential([\n    Embedding(10000, 64, input_length=200),\n    Bidirectional(LSTM(64)),  # double the context!\n    Dense(1, activation='sigmoid')\n])\n\`\`\`\n\n**Stacking RNN layers** — use return_sequences=True on all but the last:\n\n\`\`\`python\nmodel = Sequential([\n    Embedding(10000, 64, input_length=200),\n    LSTM(128, return_sequences=True),  # output sequence\n    LSTM(64),                           # output single vector\n    Dense(1, activation='sigmoid')\n])\n\`\`\`\n\n**GRU** — simpler than LSTM, often performs similarly:\n\n\`\`\`python\nfrom tensorflow.keras.layers import GRU\nmodel.add(GRU(64))  # drop-in replacement for LSTM\n\`\`\`\n\n**Key takeaway:** Use LSTM or GRU (not SimpleRNN) for sequential data. Bidirectional doubles the context. Use return_sequences=True when stacking multiple RNN layers.`, cards: [ { q: "Why use LSTM instead of SimpleRNN?", a: "LSTMs have gates that remember long-range dependencies and avoid the vanishing gradient problem" }, { q: "What does return_sequences=True do?", a: "Outputs the hidden state at every timestep (not just the last), needed for stacking RNN layers" } ], exercise: { prompt: "Build a sentiment analysis model using stacked Bidirectional LSTMs: Embedding(10000, 128) → Bidirectional LSTM(64, return_sequences=True) → Bidirectional LSTM(32) → Dense(64, relu) → Dropout(0.5) → Dense(1, sigmoid). Compile and return.", hint: "Bidirectional(LSTM(64, return_sequences=True)). Second LSTM without return_sequences.", solution: `from tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Embedding, LSTM, Bidirectional, Dense, Dropout\n\ndef build_sentiment_model(vocab_size=10000, max_len=200):\n    model = Sequential([\n        Embedding(vocab_size, 128, input_length=max_len),\n        Bidirectional(LSTM(64, return_sequences=True)),\n        Bidirectional(LSTM(32)),\n        Dense(64, activation='relu'),\n        Dropout(0.5),\n        Dense(1, activation='sigmoid')\n    ])\n    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])\n    return model`, difficulty: 4 } },
+  { day: 19, title: "IMDB Sentiment Analysis Project", content: `Let's build a complete NLP project — classifying movie reviews as positive or negative using the IMDB dataset built into Keras.\n\n**Load the dataset:**\n\n\`\`\`python\nfrom tensorflow.keras.datasets import imdb\nfrom tensorflow.keras.preprocessing.sequence import pad_sequences\n\nvocab_size = 10000\nmax_len = 250\n\n(X_train, y_train), (X_test, y_test) = imdb.load_data(num_words=vocab_size)\n\n# Pad sequences\nX_train = pad_sequences(X_train, maxlen=max_len)\nX_test = pad_sequences(X_test, maxlen=max_len)\n\nprint(f"Train: {X_train.shape}, Test: {X_test.shape}")\n# Train: (25000, 250), Test: (25000, 250)\n\`\`\`\n\n**Build and train the model:**\n\n\`\`\`python\nmodel = Sequential([\n    Embedding(vocab_size, 128, input_length=max_len),\n    Bidirectional(LSTM(64)),\n    Dense(64, activation='relu'),\n    Dropout(0.5),\n    Dense(1, activation='sigmoid')\n])\n\nmodel.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])\n\nhistory = model.fit(X_train, y_train, epochs=10, batch_size=64,\n                    validation_split=0.2,\n                    callbacks=[EarlyStopping(patience=3, restore_best_weights=True)])\n\`\`\`\n\n**Evaluate and decode predictions:**\n\n\`\`\`python\nloss, acc = model.evaluate(X_test, y_test)\nprint(f"Test accuracy: {acc:.4f}")\n\n# Decode a review back to text\nword_index = imdb.get_word_index()\nreverse_index = {v: k for k, v in word_index.items()}\ndef decode_review(encoded):\n    return ' '.join(reverse_index.get(i-3, '?') for i in encoded if i >= 3)\n\`\`\`\n\nYou should get ~85-88% accuracy — not bad for a simple model!\n\n**Key takeaway:** The IMDB dataset is a standard NLP benchmark. This complete pipeline — load, pad, embed, LSTM, classify — is the template for any text classification task.`, cards: [ { q: "What accuracy range is typical for IMDB sentiment with an LSTM?", a: "85-88% with a simple Bidirectional LSTM model" }, { q: "Why pad_sequences before feeding to an RNN?", a: "RNN layers need fixed-length input sequences, but reviews have different word counts" } ], exercise: { prompt: "Write the complete IMDB pipeline as a function run_imdb_experiment(vocab_size=10000, max_len=250, embed_dim=128, lstm_units=64, epochs=10) that loads data, builds model, trains with EarlyStopping, evaluates, and returns a dict with test_accuracy, history, and model.", hint: "imdb.load_data(num_words=vocab_size). pad_sequences. Build model, fit, evaluate.", solution: `from tensorflow.keras.datasets import imdb\nfrom tensorflow.keras.preprocessing.sequence import pad_sequences\nfrom tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Embedding, Bidirectional, LSTM, Dense, Dropout\nfrom tensorflow.keras.callbacks import EarlyStopping\n\ndef run_imdb_experiment(vocab_size=10000, max_len=250, embed_dim=128, lstm_units=64, epochs=10):\n    (X_train, y_train), (X_test, y_test) = imdb.load_data(num_words=vocab_size)\n    X_train = pad_sequences(X_train, maxlen=max_len)\n    X_test = pad_sequences(X_test, maxlen=max_len)\n    \n    model = Sequential([\n        Embedding(vocab_size, embed_dim, input_length=max_len),\n        Bidirectional(LSTM(lstm_units)),\n        Dense(64, activation='relu'),\n        Dropout(0.5),\n        Dense(1, activation='sigmoid')\n    ])\n    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])\n    \n    history = model.fit(X_train, y_train, epochs=epochs, batch_size=64,\n                        validation_split=0.2,\n                        callbacks=[EarlyStopping(patience=3, restore_best_weights=True)])\n    \n    loss, acc = model.evaluate(X_test, y_test)\n    return {'test_accuracy': acc, 'history': history, 'model': model}`, difficulty: 4 } },
+  { day: 20, title: "Time Series Forecasting with RNNs", content: `RNNs excel at time series — predicting future values from past observations. The key is creating windowed sequences from your data.\n\n**Creating sequences** — use a sliding window:\n\n\`\`\`python\nimport numpy as np\n\ndef create_sequences(data, window_size):\n    X, y = [], []\n    for i in range(len(data) - window_size):\n        X.append(data[i:i+window_size])\n        y.append(data[i+window_size])\n    return np.array(X), np.array(y)\n\n# Example: predict next temperature from last 30 days\nwindow_size = 30\nX, y = create_sequences(temperatures, window_size)\n\n# Reshape for LSTM: (samples, timesteps, features)\nX = X.reshape(-1, window_size, 1)\n\`\`\`\n\n**LSTM model for time series:**\n\n\`\`\`python\nmodel = Sequential([\n    LSTM(64, input_shape=(window_size, 1)),\n    Dense(32, activation='relu'),\n    Dense(1)  # predict one value\n])\n\nmodel.compile(optimizer='adam', loss='mse')\n\`\`\`\n\n**Multi-step prediction** — predict several steps ahead:\n\n\`\`\`python\n# Predict next 7 days by feeding predictions back\ndef predict_multi_step(model, last_window, n_steps):\n    predictions = []\n    current = last_window.copy()\n    for _ in range(n_steps):\n        pred = model.predict(current.reshape(1, -1, 1))[0, 0]\n        predictions.append(pred)\n        current = np.append(current[1:], pred)\n    return predictions\n\`\`\`\n\n**Key takeaway:** Create sliding window sequences from time series. Reshape to (samples, timesteps, features) for LSTM. Use MSE loss for regression. Feed predictions back for multi-step forecasting.`, cards: [ { q: "What shape does LSTM input need?", a: "(batch_size, timesteps, features) — 3D tensor" }, { q: "How do you create supervised learning data from a time series?", a: "Sliding window: each window of past values becomes X, the next value becomes y" } ], exercise: { prompt: "Write a complete time series forecasting pipeline: (1) create_sequences(data, window_size) function, (2) build_ts_model(window_size, n_features=1) that returns a compiled LSTM model, (3) a function forecast(model, data, window_size, n_steps) that predicts multiple future steps.", hint: "LSTM(64, input_shape=(window_size, n_features)). For forecast, loop and feed predictions back.", solution: `import numpy as np\nfrom tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import LSTM, Dense\n\ndef create_sequences(data, window_size):\n    X, y = [], []\n    for i in range(len(data) - window_size):\n        X.append(data[i:i+window_size])\n        y.append(data[i+window_size])\n    return np.array(X).reshape(-1, window_size, 1), np.array(y)\n\ndef build_ts_model(window_size, n_features=1):\n    model = Sequential([\n        LSTM(64, input_shape=(window_size, n_features)),\n        Dense(32, activation='relu'),\n        Dense(1)\n    ])\n    model.compile(optimizer='adam', loss='mse', metrics=['mae'])\n    return model\n\ndef forecast(model, data, window_size, n_steps):\n    preds = []\n    window = data[-window_size:].copy()\n    for _ in range(n_steps):\n        p = model.predict(window.reshape(1, window_size, 1), verbose=0)[0, 0]\n        preds.append(p)\n        window = np.append(window[1:], p)\n    return preds`, difficulty: 4 } },
+  { day: 21, title: "Hyperparameter Tuning with Keras Tuner", content: `Finding the best model architecture and hyperparameters is crucial. Keras Tuner automates this search.\n\n**Install:** pip install keras-tuner\n\n**Define a model-building function with tunable parameters:**\n\n\`\`\`python\nimport keras_tuner as kt\n\ndef build_model(hp):\n    model = Sequential()\n    model.add(Dense(\n        units=hp.Int('units_1', min_value=32, max_value=256, step=32),\n        activation='relu', input_shape=(10,)))\n    \n    model.add(Dropout(hp.Float('dropout', 0.1, 0.5, step=0.1)))\n    \n    model.add(Dense(\n        units=hp.Int('units_2', 16, 128, step=16),\n        activation='relu'))\n    \n    model.add(Dense(1))\n    \n    model.compile(\n        optimizer=Adam(learning_rate=hp.Choice('lr', [1e-2, 1e-3, 1e-4])),\n        loss='mse')\n    return model\n\`\`\`\n\n**Run the search:**\n\n\`\`\`python\ntuner = kt.RandomSearch(\n    build_model,\n    objective='val_loss',\n    max_trials=20,\n    directory='tuner_results'\n)\n\ntuner.search(X_train, y_train, epochs=50,\n             validation_split=0.2,\n             callbacks=[EarlyStopping(patience=5)])\n\nbest_model = tuner.get_best_models(1)[0]\nbest_hp = tuner.get_best_hyperparameters(1)[0]\nprint(best_hp.values)\n\`\`\`\n\n**Key takeaway:** Keras Tuner automates hyperparameter search. Define tunable parameters with hp.Int, hp.Float, hp.Choice. Use RandomSearch or BayesianOptimization to find the best combination.`, cards: [ { q: "What are the main hp types in Keras Tuner?", a: "hp.Int (integer range), hp.Float (float range), hp.Choice (pick from a list)" }, { q: "What search strategies does Keras Tuner offer?", a: "RandomSearch, BayesianOptimization, and Hyperband" } ], exercise: { prompt: "Write a build_tunable_model(hp) function that tunes: number of hidden layers (1-4), units per layer (32-256), dropout rate (0.1-0.5), learning rate choice [1e-2, 1e-3, 1e-4], and activation choice ['relu', 'tanh']. For a classification task with 10 classes.", hint: "Use hp.Int('num_layers', 1, 4). Loop to add layers. hp.Choice for activation and lr.", solution: `import keras_tuner as kt\nfrom tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Dense, Dropout\nfrom tensorflow.keras.optimizers import Adam\n\ndef build_tunable_model(hp):\n    model = Sequential()\n    activation = hp.Choice('activation', ['relu', 'tanh'])\n    \n    for i in range(hp.Int('num_layers', 1, 4)):\n        model.add(Dense(\n            units=hp.Int(f'units_{i}', 32, 256, step=32),\n            activation=activation,\n            input_shape=(784,) if i == 0 else []))\n        model.add(Dropout(hp.Float('dropout', 0.1, 0.5, step=0.1)))\n    \n    model.add(Dense(10, activation='softmax'))\n    model.compile(\n        optimizer=Adam(learning_rate=hp.Choice('lr', [1e-2, 1e-3, 1e-4])),\n        loss='sparse_categorical_crossentropy',\n        metrics=['accuracy'])\n    return model`, difficulty: 4 } },
+  { day: 22, title: "Custom Training Loops", content: `Keras model.fit() is great for most cases. But sometimes you need full control — custom losses, gradient manipulation, or complex training logic. That's where tf.GradientTape comes in.\n\n**Basic custom training loop:**\n\n\`\`\`python\nimport tensorflow as tf\n\noptimizer = tf.keras.optimizers.Adam()\nloss_fn = tf.keras.losses.SparseCategoricalCrossentropy()\n\n@tf.function  # compile to graph for speed\ndef train_step(x, y):\n    with tf.GradientTape() as tape:\n        predictions = model(x, training=True)\n        loss = loss_fn(y, predictions)\n    \n    gradients = tape.gradient(loss, model.trainable_variables)\n    optimizer.apply_gradients(zip(gradients, model.trainable_variables))\n    return loss\n\n# Training loop\nfor epoch in range(10):\n    for x_batch, y_batch in train_dataset:\n        loss = train_step(x_batch, y_batch)\n    print(f"Epoch {epoch+1}, Loss: {loss:.4f}")\n\`\`\`\n\n**What's happening:** GradientTape records operations, then tape.gradient() computes derivatives. optimizer.apply_gradients() updates weights.\n\n**@tf.function** compiles Python code to a TensorFlow graph — runs much faster. Always use it for training steps.\n\n**Custom loss functions:**\n\n\`\`\`python\ndef custom_mse(y_true, y_pred):\n    return tf.reduce_mean(tf.square(y_true - y_pred))\n\n# Use in compile or custom loop\nmodel.compile(optimizer='adam', loss=custom_mse)\n\`\`\`\n\n**Key takeaway:** GradientTape gives full training control. Use @tf.function for performance. Custom loops are needed for advanced techniques like GANs, reinforcement learning, and custom losses.`, cards: [ { q: "What does tf.GradientTape do?", a: "Records operations to automatically compute gradients for backpropagation" }, { q: "What does @tf.function do?", a: "Compiles the function to a TensorFlow graph for faster execution" } ], exercise: { prompt: "Write a custom training loop function custom_train(model, dataset, epochs=5) that: uses GradientTape, tracks loss and accuracy per epoch, prints results, and returns a dict of epoch losses and accuracies. Use SparseCategoricalCrossentropy and SparseCategoricalAccuracy.", hint: "tf.keras.metrics.SparseCategoricalAccuracy(). Reset metrics each epoch with .reset_states().", solution: `import tensorflow as tf\n\ndef custom_train(model, dataset, epochs=5):\n    optimizer = tf.keras.optimizers.Adam()\n    loss_fn = tf.keras.losses.SparseCategoricalCrossentropy()\n    acc_metric = tf.keras.metrics.SparseCategoricalAccuracy()\n    history = {'loss': [], 'accuracy': []}\n    \n    @tf.function\n    def train_step(x, y):\n        with tf.GradientTape() as tape:\n            preds = model(x, training=True)\n            loss = loss_fn(y, preds)\n        grads = tape.gradient(loss, model.trainable_variables)\n        optimizer.apply_gradients(zip(grads, model.trainable_variables))\n        acc_metric.update_state(y, preds)\n        return loss\n    \n    for epoch in range(epochs):\n        acc_metric.reset_states()\n        epoch_loss = []\n        for x_batch, y_batch in dataset:\n            loss = train_step(x_batch, y_batch)\n            epoch_loss.append(float(loss))\n        avg_loss = sum(epoch_loss) / len(epoch_loss)\n        acc = float(acc_metric.result())\n        history['loss'].append(avg_loss)\n        history['accuracy'].append(acc)\n        print(f\"Epoch {epoch+1}: loss={avg_loss:.4f}, acc={acc:.4f}\")\n    return history`, difficulty: 5 } },
+  { day: 23, title: "Autoencoders", content: `Autoencoders learn to compress data into a smaller representation and then reconstruct it. They're used for dimensionality reduction, denoising, and anomaly detection.\n\n**Architecture:** Encoder (compress) → Bottleneck (compressed representation) → Decoder (reconstruct)\n\n\`\`\`python\n# Encoder\nencoder = Sequential([\n    Dense(128, activation='relu', input_shape=(784,)),\n    Dense(64, activation='relu'),\n    Dense(32, activation='relu')   # bottleneck: 784 → 32 dims!\n])\n\n# Decoder\ndecoder = Sequential([\n    Dense(64, activation='relu', input_shape=(32,)),\n    Dense(128, activation='relu'),\n    Dense(784, activation='sigmoid')  # reconstruct original\n])\n\n# Full autoencoder\nautoencoder = Sequential([encoder, decoder])\nautoencoder.compile(optimizer='adam', loss='mse')\n\n# Train: input = output!\nautoencoder.fit(X_train, X_train, epochs=50,\n                validation_data=(X_test, X_test))\n\`\`\`\n\nNotice: the target is the same as the input! The model learns to reconstruct its own input through the bottleneck.\n\n**Denoising autoencoder** — train on noisy input, reconstruct clean version:\n\n\`\`\`python\nnoise = np.random.normal(0, 0.5, X_train.shape)\nX_noisy = np.clip(X_train + noise, 0, 1)\n\nautoencoder.fit(X_noisy, X_train, epochs=50)  # noisy → clean\n\`\`\`\n\n**Using the encoder for dimensionality reduction:**\n\n\`\`\`python\n# Extract just the encoder\ncompressed = encoder.predict(X_test)  # shape: (n, 32)\n# Use compressed features for clustering, visualization, etc.\n\`\`\`\n\n**Key takeaway:** Autoencoders compress and reconstruct data. Train with input=output. The bottleneck forces the model to learn the most important features. Great for denoising and dimensionality reduction.`, cards: [ { q: "What makes an autoencoder different from a normal network?", a: "The target is the same as the input — the model learns to reconstruct its own input through a compressed bottleneck" }, { q: "Name two practical uses of autoencoders.", a: "Denoising (remove noise from data) and dimensionality reduction (compress features)" } ], exercise: { prompt: "Build a convolutional autoencoder for MNIST: encoder uses Conv2D(32)+MaxPool, Conv2D(16)+MaxPool; decoder uses Conv2D(16)+UpSampling2D, Conv2D(32)+UpSampling2D, Conv2D(1, sigmoid). Use Functional API. Return encoder and full autoencoder.", hint: "UpSampling2D((2,2)) is the opposite of MaxPooling2D. Input shape (28,28,1).", solution: `from tensorflow import keras\nfrom tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D\n\ndef build_conv_autoencoder():\n    inp = Input(shape=(28, 28, 1))\n    \n    # Encoder\n    x = Conv2D(32, (3,3), activation='relu', padding='same')(inp)\n    x = MaxPooling2D((2,2))(x)\n    x = Conv2D(16, (3,3), activation='relu', padding='same')(x)\n    encoded = MaxPooling2D((2,2))(x)\n    \n    # Decoder\n    x = Conv2D(16, (3,3), activation='relu', padding='same')(encoded)\n    x = UpSampling2D((2,2))(x)\n    x = Conv2D(32, (3,3), activation='relu', padding='same')(x)\n    x = UpSampling2D((2,2))(x)\n    decoded = Conv2D(1, (3,3), activation='sigmoid', padding='same')(x)\n    \n    encoder = keras.Model(inp, encoded)\n    autoencoder = keras.Model(inp, decoded)\n    autoencoder.compile(optimizer='adam', loss='mse')\n    return encoder, autoencoder`, difficulty: 5 } },
+  { day: 24, title: "Generative Models — VAE Basics", content: `A Variational Autoencoder (VAE) is like a regular autoencoder but can generate NEW data, not just reconstruct existing data.\n\n**The key difference:** Instead of encoding to a fixed point, the VAE encodes to a probability distribution (mean and variance), then samples from it.\n\n\`\`\`python\nfrom tensorflow.keras.layers import Lambda\nimport tensorflow.keras.backend as K\n\n# Sampling function\ndef sampling(args):\n    z_mean, z_log_var = args\n    epsilon = K.random_normal(shape=K.shape(z_mean))\n    return z_mean + K.exp(0.5 * z_log_var) * epsilon\n\n# Encoder\ninputs = Input(shape=(784,))\nx = Dense(256, activation='relu')(inputs)\nz_mean = Dense(latent_dim)(x)\nz_log_var = Dense(latent_dim)(x)\nz = Lambda(sampling)([z_mean, z_log_var])\n\nencoder = keras.Model(inputs, [z_mean, z_log_var, z])\n\`\`\`\n\n**The VAE loss** combines reconstruction loss AND KL divergence (keeps the distribution close to a standard normal):\n\n\`\`\`python\nreconstruction_loss = tf.reduce_mean(\n    keras.losses.binary_crossentropy(inputs, outputs)) * 784\nkl_loss = -0.5 * tf.reduce_mean(\n    1 + z_log_var - tf.square(z_mean) - tf.exp(z_log_var))\ntotal_loss = reconstruction_loss + kl_loss\n\`\`\`\n\n**Generating new images:**\n\n\`\`\`python\n# Sample from standard normal\nz_sample = np.random.normal(0, 1, (10, latent_dim))\ngenerated = decoder.predict(z_sample)\n\`\`\`\n\n**Key takeaway:** VAEs encode to distributions, not points. This lets them generate new data by sampling. The loss balances reconstruction quality with distribution smoothness.`, cards: [ { q: "What's the key difference between an autoencoder and a VAE?", a: "VAE encodes to a distribution (mean + variance) and samples from it, enabling generation of new data" }, { q: "What are the two parts of the VAE loss?", a: "Reconstruction loss (how well it rebuilds input) + KL divergence (keeps latent space organized)" } ], exercise: { prompt: "Write the sampling function for a VAE and a function that creates the encoder part: Input(784) → Dense(256, relu) → z_mean(Dense(latent_dim)) and z_log_var(Dense(latent_dim)) → sample using the reparameterization trick. Return encoder model that outputs [z_mean, z_log_var, z].", hint: "Lambda(sampling)([z_mean, z_log_var]). keras.Model(inputs, [z_mean, z_log_var, z]).", solution: `import tensorflow as tf\nfrom tensorflow import keras\nfrom tensorflow.keras.layers import Input, Dense, Lambda\nimport tensorflow.keras.backend as K\n\ndef sampling(args):\n    z_mean, z_log_var = args\n    eps = K.random_normal(shape=K.shape(z_mean))\n    return z_mean + K.exp(0.5 * z_log_var) * eps\n\ndef build_vae_encoder(input_dim=784, latent_dim=2):\n    inputs = Input(shape=(input_dim,))\n    x = Dense(256, activation='relu')(inputs)\n    z_mean = Dense(latent_dim, name='z_mean')(x)\n    z_log_var = Dense(latent_dim, name='z_log_var')(x)\n    z = Lambda(sampling, name='z')([z_mean, z_log_var])\n    encoder = keras.Model(inputs, [z_mean, z_log_var, z], name='encoder')\n    return encoder`, difficulty: 5 } },
+  { day: 25, title: "Image Classification Project — CIFAR-10", content: `Let's build a complete CNN project classifying 10 categories of real-world images using CIFAR-10 (airplanes, cars, birds, cats, deer, dogs, frogs, horses, ships, trucks).\n\n**Load and inspect:**\n\n\`\`\`python\n(X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()\nprint(X_train.shape)  # (50000, 32, 32, 3) — 50k color images\n\nX_train = X_train.astype('float32') / 255.0\nX_test = X_test.astype('float32') / 255.0\n\`\`\`\n\n**Build a strong CNN:**\n\n\`\`\`python\nmodel = Sequential([\n    # Augmentation\n    RandomFlip('horizontal'),\n    RandomRotation(0.1),\n    \n    # Block 1\n    Conv2D(32, (3,3), activation='relu', padding='same', input_shape=(32,32,3)),\n    BatchNormalization(),\n    Conv2D(32, (3,3), activation='relu', padding='same'),\n    MaxPooling2D((2,2)),\n    Dropout(0.25),\n    \n    # Block 2\n    Conv2D(64, (3,3), activation='relu', padding='same'),\n    BatchNormalization(),\n    Conv2D(64, (3,3), activation='relu', padding='same'),\n    MaxPooling2D((2,2)),\n    Dropout(0.25),\n    \n    # Classifier\n    Flatten(),\n    Dense(256, activation='relu'),\n    Dropout(0.5),\n    Dense(10, activation='softmax')\n])\n\`\`\`\n\nWith augmentation, BatchNorm, and Dropout, this should reach ~80-85% accuracy.\n\n**Key takeaway:** CIFAR-10 is harder than MNIST (color, complex objects). Use double Conv2D blocks, BatchNorm, Dropout, and augmentation for good results.`, cards: [ { q: "What is CIFAR-10?", a: "A dataset of 60,000 32x32 color images in 10 classes (airplane, car, bird, cat, etc.)" }, { q: "Why use padding='same' in Conv2D?", a: "Keeps the spatial dimensions the same, so only MaxPooling reduces size" } ], exercise: { prompt: "Build the complete CIFAR-10 pipeline: load data, normalize, build CNN with augmentation + BatchNorm + Dropout, train with EarlyStopping and ReduceLROnPlateau, evaluate, print test accuracy. Wrap in a function run_cifar10(epochs=50).", hint: "keras.datasets.cifar10.load_data(). Same CNN pattern as the lesson.", solution: `from tensorflow import keras\nfrom tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import (Conv2D, MaxPooling2D, Flatten, Dense,\n    Dropout, BatchNormalization, RandomFlip, RandomRotation)\nfrom tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau\n\ndef run_cifar10(epochs=50):\n    (X_train, y_train), (X_test, y_test) = keras.datasets.cifar10.load_data()\n    X_train = X_train.astype('float32') / 255.0\n    X_test = X_test.astype('float32') / 255.0\n    \n    model = Sequential([\n        RandomFlip('horizontal', input_shape=(32,32,3)),\n        RandomRotation(0.1),\n        Conv2D(32, (3,3), activation='relu', padding='same'),\n        BatchNormalization(),\n        Conv2D(32, (3,3), activation='relu', padding='same'),\n        MaxPooling2D((2,2)), Dropout(0.25),\n        Conv2D(64, (3,3), activation='relu', padding='same'),\n        BatchNormalization(),\n        Conv2D(64, (3,3), activation='relu', padding='same'),\n        MaxPooling2D((2,2)), Dropout(0.25),\n        Flatten(),\n        Dense(256, activation='relu'), Dropout(0.5),\n        Dense(10, activation='softmax')\n    ])\n    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])\n    \n    callbacks = [EarlyStopping(patience=10, restore_best_weights=True),\n                 ReduceLROnPlateau(factor=0.5, patience=3)]\n    history = model.fit(X_train, y_train, epochs=epochs, batch_size=64,\n                        validation_split=0.1, callbacks=callbacks)\n    loss, acc = model.evaluate(X_test, y_test)\n    print(f\"Test accuracy: {acc:.4f}\")\n    return {'model': model, 'history': history, 'test_accuracy': acc}`, difficulty: 4 } },
+  { day: 26, title: "Model Interpretation & Visualization", content: `Understanding WHY your model makes predictions is as important as accuracy. Let's visualize what CNNs learn.\n\n**Visualizing filters and feature maps:**\n\n\`\`\`python\n# Get outputs from intermediate layers\nlayer_outputs = [layer.output for layer in model.layers if 'conv' in layer.name]\nactivation_model = keras.Model(inputs=model.input, outputs=layer_outputs)\n\n# Get activations for one image\nactivations = activation_model.predict(sample_image[np.newaxis, ...])\n\n# Plot feature maps from first conv layer\nfig, axes = plt.subplots(4, 8, figsize=(16, 8))\nfor i, ax in enumerate(axes.flat):\n    if i < activations[0].shape[-1]:\n        ax.imshow(activations[0][0, :, :, i], cmap='viridis')\n    ax.axis('off')\n\`\`\`\n\n**Confusion matrix** — see exactly where the model gets confused:\n\n\`\`\`python\nfrom sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay\n\npreds = model.predict(X_test).argmax(axis=1)\ncm = confusion_matrix(y_test.flatten(), preds)\ndisp = ConfusionMatrixDisplay(cm, display_labels=class_names)\ndisp.plot(figsize=(10, 10), cmap='Blues')\n\`\`\`\n\n**Grad-CAM** — highlight which parts of the image the model focuses on:\n\n\`\`\`python\nimport tensorflow as tf\n\ndef grad_cam(model, image, class_idx, last_conv_layer_name):\n    grad_model = tf.keras.Model(\n        model.inputs,\n        [model.get_layer(last_conv_layer_name).output, model.output])\n    \n    with tf.GradientTape() as tape:\n        conv_outputs, predictions = grad_model(image[tf.newaxis, ...])\n        loss = predictions[:, class_idx]\n    \n    grads = tape.gradient(loss, conv_outputs)\n    weights = tf.reduce_mean(grads, axis=(0, 1, 2))\n    cam = tf.reduce_sum(conv_outputs[0] * weights, axis=-1)\n    cam = tf.maximum(cam, 0) / tf.reduce_max(cam)\n    return cam.numpy()\n\`\`\`\n\n**Key takeaway:** Visualize feature maps to see what patterns CNNs detect. Use confusion matrices to find weak spots. Grad-CAM shows which image regions drive predictions.`, cards: [ { q: "What does Grad-CAM show?", a: "A heatmap of which image regions most influenced the model's prediction for a specific class" }, { q: "How do you access intermediate layer outputs?", a: "Create a new Model with model.input and the desired layer.output" } ], exercise: { prompt: "Write a function analyze_model(model, X_test, y_test, class_names) that: (1) generates predictions, (2) computes and returns the confusion matrix, (3) finds the top 3 most confused class pairs (highest off-diagonal values), (4) returns overall accuracy and per-class accuracy.", hint: "confusion_matrix from sklearn. np.diag(cm) / cm.sum(axis=1) for per-class accuracy.", solution: `import numpy as np\nfrom sklearn.metrics import confusion_matrix\n\ndef analyze_model(model, X_test, y_test, class_names):\n    preds = model.predict(X_test).argmax(axis=1)\n    y_flat = y_test.flatten()\n    cm = confusion_matrix(y_flat, preds)\n    \n    overall_acc = np.mean(preds == y_flat)\n    per_class = np.diag(cm) / cm.sum(axis=1)\n    per_class_dict = {class_names[i]: round(float(per_class[i]), 4) for i in range(len(class_names))}\n    \n    # Find most confused pairs\n    confused = []\n    for i in range(len(class_names)):\n        for j in range(len(class_names)):\n            if i != j:\n                confused.append((class_names[i], class_names[j], int(cm[i, j])))\n    confused.sort(key=lambda x: x[2], reverse=True)\n    \n    return {'confusion_matrix': cm, 'overall_accuracy': overall_acc,\n            'per_class_accuracy': per_class_dict, 'top_confused': confused[:3]}`, difficulty: 4 } },
+  { day: 27, title: "Custom Layers & Models", content: `When built-in layers aren't enough, you can create your own. Custom layers let you implement novel architectures from research papers.\n\n**Custom layer** — subclass tf.keras.layers.Layer:\n\n\`\`\`python\nclass ScaledDense(keras.layers.Layer):\n    def __init__(self, units, scale=1.0, **kwargs):\n        super().__init__(**kwargs)\n        self.units = units\n        self.scale = scale\n    \n    def build(self, input_shape):\n        self.w = self.add_weight(shape=(input_shape[-1], self.units),\n                                 initializer='random_normal', trainable=True)\n        self.b = self.add_weight(shape=(self.units,),\n                                 initializer='zeros', trainable=True)\n    \n    def call(self, inputs):\n        return tf.nn.relu(tf.matmul(inputs, self.w) + self.b) * self.scale\n\n# Use it like any layer\nmodel.add(ScaledDense(64, scale=0.1))\n\`\`\`\n\n**Custom model** — subclass tf.keras.Model for full control:\n\n\`\`\`python\nclass MyClassifier(keras.Model):\n    def __init__(self, num_classes):\n        super().__init__()\n        self.dense1 = Dense(128, activation='relu')\n        self.dense2 = Dense(64, activation='relu')\n        self.dropout = Dropout(0.3)\n        self.classifier = Dense(num_classes, activation='softmax')\n    \n    def call(self, inputs, training=False):\n        x = self.dense1(inputs)\n        x = self.dense2(x)\n        if training:\n            x = self.dropout(x)\n        return self.classifier(x)\n\nmodel = MyClassifier(10)\nmodel.compile(optimizer='adam', loss='sparse_categorical_crossentropy')\n\`\`\`\n\n**Key takeaway:** Subclass Layer for custom operations with trainable weights. Subclass Model for complex architectures. Always pass training flag for layers like Dropout.`, cards: [ { q: "What 3 methods must a custom Layer implement?", a: "__init__ (config), build (create weights), call (forward pass)" }, { q: "Why pass training=True/False in model.call()?", a: "Some layers like Dropout behave differently during training vs inference" } ], exercise: { prompt: "Create a custom ResidualBlock layer that takes an input, passes it through Dense(units, relu) → Dense(units, relu), then adds the original input back (skip connection). If input dim != units, add a projection Dense. Use it in a model.", hint: "In build(): check input_shape[-1] != self.units to decide projection. In call(): return x + shortcut.", solution: `import tensorflow as tf\nfrom tensorflow import keras\nfrom tensorflow.keras.layers import Dense\n\nclass ResidualBlock(keras.layers.Layer):\n    def __init__(self, units, **kwargs):\n        super().__init__(**kwargs)\n        self.units = units\n        self.dense1 = Dense(units, activation='relu')\n        self.dense2 = Dense(units)\n        self.projection = None\n    \n    def build(self, input_shape):\n        if input_shape[-1] != self.units:\n            self.projection = Dense(self.units)\n        super().build(input_shape)\n    \n    def call(self, inputs):\n        x = self.dense1(inputs)\n        x = self.dense2(x)\n        shortcut = self.projection(inputs) if self.projection else inputs\n        return tf.nn.relu(x + shortcut)\n\n# Usage\nmodel = keras.Sequential([\n    Dense(64, activation='relu', input_shape=(784,)),\n    ResidualBlock(64),\n    ResidualBlock(64),\n    Dense(10, activation='softmax')\n])`, difficulty: 5 } },
+  { day: 28, title: "TF Serving & Model Deployment", content: `A model is only useful if you can deploy it. Let's cover the main deployment options.\n\n**SavedModel format** — TensorFlow's standard deployment format:\n\n\`\`\`python\n# Save\nmodel.save('saved_model/my_model')\n\n# Load\nloaded = tf.keras.models.load_model('saved_model/my_model')\n\`\`\`\n\n**TensorFlow Lite** — for mobile and edge devices:\n\n\`\`\`python\nconverter = tf.lite.TFLiteConverter.from_keras_model(model)\ntflite_model = converter.convert()\n\nwith open('model.tflite', 'wb') as f:\n    f.write(tflite_model)\n\n# Quantize for smaller size + faster inference\nconverter.optimizations = [tf.lite.Optimize.DEFAULT]\ntflite_quantized = converter.convert()\n\`\`\`\n\n**TensorFlow.js** — run models in the browser:\n\n\`\`\`python\n# pip install tensorflowjs\nimport tensorflowjs as tfjs\ntfjs.converters.save_keras_model(model, 'tfjs_model/')\n\`\`\`\n\n**Simple REST API with Flask:**\n\n\`\`\`python\nfrom flask import Flask, request, jsonify\nimport numpy as np\n\napp = Flask(__name__)\nmodel = tf.keras.models.load_model('my_model.keras')\n\n@app.route('/predict', methods=['POST'])\ndef predict():\n    data = np.array(request.json['data'])\n    prediction = model.predict(data).tolist()\n    return jsonify({'prediction': prediction})\n\`\`\`\n\n**Key takeaway:** SavedModel for servers, TFLite for mobile, TF.js for browsers. Wrap in a REST API for web deployment. Quantization makes models smaller and faster.`, cards: [ { q: "What format do you use for mobile deployment?", a: "TensorFlow Lite (.tflite) — smaller and optimized for mobile/edge devices" }, { q: "What does quantization do?", a: "Reduces model size and speeds up inference by using lower precision (e.g., float16 or int8)" } ], exercise: { prompt: "Write a function export_model(model, name) that saves the model in all 3 formats: (1) Keras .keras file, (2) TFLite file, (3) prints the TFLite model size in KB. Return a dict with file paths and tflite_size_kb.", hint: "model.save(). tf.lite.TFLiteConverter.from_keras_model(). len(tflite_model) / 1024.", solution: `import tensorflow as tf\nimport os\n\ndef export_model(model, name='my_model'):\n    # Keras format\n    keras_path = f'{name}.keras'\n    model.save(keras_path)\n    \n    # TFLite\n    converter = tf.lite.TFLiteConverter.from_keras_model(model)\n    tflite_model = converter.convert()\n    tflite_path = f'{name}.tflite'\n    with open(tflite_path, 'wb') as f:\n        f.write(tflite_model)\n    \n    size_kb = len(tflite_model) / 1024\n    print(f\"TFLite model size: {size_kb:.1f} KB\")\n    \n    return {\n        'keras_path': keras_path,\n        'tflite_path': tflite_path,\n        'tflite_size_kb': round(size_kb, 1)\n    }`, difficulty: 3 } },
+  { day: 29, title: "End-to-End ML Pipeline", content: `Let's bring everything together into a production-ready ML pipeline that you can reuse for any project.\n\n**The complete pipeline:**\n\n\`\`\`python\ndef ml_pipeline(df, target_col, task='classification'):\n    # 1. Explore\n    print(df.describe())\n    print(f"Target distribution:\\n{df[target_col].value_counts()}")\n    \n    # 2. Preprocess\n    X = pd.get_dummies(df.drop(columns=[target_col]))\n    y = df[target_col].values\n    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)\n    \n    scaler = StandardScaler()\n    X_train = scaler.fit_transform(X_train)\n    X_test = scaler.transform(X_test)\n    \n    # 3. Build model\n    model = Sequential([\n        Dense(128, activation='relu', input_shape=(X_train.shape[1],)),\n        BatchNormalization(), Dropout(0.3),\n        Dense(64, activation='relu'),\n        BatchNormalization(), Dropout(0.3),\n    ])\n    \n    if task == 'classification':\n        n_classes = len(np.unique(y))\n        model.add(Dense(n_classes, activation='softmax'))\n        model.compile(optimizer='adam',\n                      loss='sparse_categorical_crossentropy',\n                      metrics=['accuracy'])\n    else:\n        model.add(Dense(1))\n        model.compile(optimizer='adam', loss='mse', metrics=['mae'])\n    \n    # 4. Train with best practices\n    callbacks = [\n        EarlyStopping(patience=15, restore_best_weights=True),\n        ReduceLROnPlateau(factor=0.5, patience=5)\n    ]\n    history = model.fit(X_train, y_train, epochs=200,\n                        validation_split=0.2, callbacks=callbacks)\n    \n    # 5. Evaluate\n    results = model.evaluate(X_test, y_test)\n    return model, history, results, scaler\n\`\`\`\n\n**Key takeaway:** A solid pipeline handles exploration, preprocessing (scale + encode), model building, training with callbacks, and evaluation. Reuse this template for every project.`, cards: [ { q: "What are the 5 steps of a complete ML pipeline?", a: "Explore data → Preprocess (scale/encode) → Build model → Train with callbacks → Evaluate" }, { q: "What callbacks should every training run include?", a: "EarlyStopping (prevent overfitting) and ReduceLROnPlateau (adapt learning rate)" } ], exercise: { prompt: "Write a complete AutoML-style function auto_train(df, target_col) that: (1) auto-detects classification vs regression, (2) preprocesses, (3) tries 3 model sizes (small/medium/large), (4) picks the best by validation metric, (5) evaluates on test set, (6) returns the best model, scaler, and results dict.", hint: "Detect task: if y.dtype is object or nunique < 20 → classification. Try different layer sizes.", solution: `import numpy as np\nimport pandas as pd\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.preprocessing import StandardScaler\nfrom tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import Dense, Dropout, BatchNormalization\nfrom tensorflow.keras.callbacks import EarlyStopping\n\ndef auto_train(df, target_col):\n    X = pd.get_dummies(df.drop(columns=[target_col])).values.astype('float32')\n    y = df[target_col].values\n    is_clf = y.dtype == object or len(np.unique(y)) < 20\n    if is_clf and y.dtype == object:\n        from sklearn.preprocessing import LabelEncoder\n        y = LabelEncoder().fit_transform(y)\n    \n    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\n    scaler = StandardScaler()\n    X_train = scaler.fit_transform(X_train)\n    X_test = scaler.transform(X_test)\n    \n    configs = {'small': [64, 32], 'medium': [128, 64, 32], 'large': [256, 128, 64, 32]}\n    best_model, best_score, best_name = None, float('inf') if not is_clf else 0, ''\n    \n    for name, layers in configs.items():\n        model = Sequential()\n        for i, units in enumerate(layers):\n            model.add(Dense(units, activation='relu',\n                           input_shape=(X_train.shape[1],) if i == 0 else []))\n            model.add(Dropout(0.3))\n        \n        if is_clf:\n            model.add(Dense(len(np.unique(y)), activation='softmax'))\n            model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])\n        else:\n            model.add(Dense(1))\n            model.compile(optimizer='adam', loss='mse', metrics=['mae'])\n        \n        h = model.fit(X_train, y_train, epochs=100, validation_split=0.2,\n                      callbacks=[EarlyStopping(patience=10, restore_best_weights=True)], verbose=0)\n        \n        score = max(h.history['val_accuracy']) if is_clf else min(h.history['val_loss'])\n        if (is_clf and score > best_score) or (not is_clf and score < best_score):\n            best_model, best_score, best_name = model, score, name\n    \n    results = best_model.evaluate(X_test, y_test)\n    return {'model': best_model, 'scaler': scaler, 'best_config': best_name,\n            'test_results': results, 'task': 'classification' if is_clf else 'regression'}`, difficulty: 5 } },
+  { day: 30, title: "What's Next — Advanced Topics Roadmap", content: `Congratulations! You've completed 30 days of TensorFlow/Keras for Machine Learning. You can now build, train, evaluate, and deploy neural networks for a wide range of tasks.\n\n**Your skills now cover:**\n• Dense networks for tabular data (regression & classification)\n• CNNs for image classification (from scratch and transfer learning)\n• RNNs/LSTMs for text and time series\n• Autoencoders and VAE basics for generative models\n• Custom layers, training loops, and model deployment\n• Best practices: regularization, callbacks, hyperparameter tuning\n\n**Where to go next:**\n\n**1. Transformers & NLP.** The attention mechanism behind ChatGPT, BERT, and GPT. Start with Hugging Face Transformers library — it wraps everything nicely.\n\n**2. GANs (Generative Adversarial Networks).** Two networks competing — a generator creates fake data, a discriminator tries to detect it. Used for image generation, style transfer.\n\n**3. Reinforcement Learning.** Train agents to make decisions by rewarding good actions. Used in game AI, robotics, recommendation systems.\n\n**4. MLOps & Production.** MLflow for experiment tracking, Docker for containerization, Kubernetes for scaling, CI/CD for automated retraining.\n\n**5. Advanced architectures.** Graph Neural Networks, Diffusion Models (Stable Diffusion), Mixture of Experts.\n\n**Resources:**\n• TensorFlow tutorials: tensorflow.org/tutorials\n• Keras documentation: keras.io\n• Papers With Code: paperswithcode.com\n• Fast.ai course (free, practical focus)\n• "Deep Learning with Python" by Francois Chollet (Keras creator)\n\n**Build projects!** The best way to learn is to apply these skills to problems you care about. Pick a dataset, set a goal, and build end-to-end.`, cards: [ { q: "What's the next major architecture to learn after CNNs and RNNs?", a: "Transformers — the attention-based architecture behind modern NLP (BERT, GPT) and increasingly vision tasks" }, { q: "Name 3 advanced topics to explore after this course.", a: "Transformers/NLP, GANs (generative models), Reinforcement Learning (or MLOps, Graph NNs, Diffusion Models)" } ], exercise: { prompt: "Final challenge! Write a function full_ml_experiment(task_type, dataset_name) that: if task_type='image' loads CIFAR-10 and builds a CNN, if task_type='text' loads IMDB and builds an LSTM, if task_type='tabular' creates synthetic data and builds a Dense network. Each path: preprocess → build → train (with callbacks) → evaluate → return results dict with model, accuracy, and training time.", hint: "Use if/elif for each task. time.time() for timing. keras.datasets for loading. Combine all previous skills.", solution: `import time\nimport numpy as np\nfrom tensorflow import keras\nfrom tensorflow.keras import Sequential\nfrom tensorflow.keras.layers import *\nfrom tensorflow.keras.callbacks import EarlyStopping\nfrom tensorflow.keras.preprocessing.sequence import pad_sequences\nfrom sklearn.datasets import make_classification\nfrom sklearn.preprocessing import StandardScaler\nfrom sklearn.model_selection import train_test_split\n\ndef full_ml_experiment(task_type='image', epochs=20):\n    start = time.time()\n    \n    if task_type == 'image':\n        (X_tr, y_tr), (X_te, y_te) = keras.datasets.cifar10.load_data()\n        X_tr, X_te = X_tr/255.0, X_te/255.0\n        model = Sequential([\n            Conv2D(32,(3,3),activation='relu',padding='same',input_shape=(32,32,3)),\n            MaxPooling2D((2,2)),\n            Conv2D(64,(3,3),activation='relu',padding='same'),\n            MaxPooling2D((2,2)),\n            Flatten(), Dense(128,activation='relu'), Dropout(0.5),\n            Dense(10, activation='softmax')])\n        model.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'])\n    \n    elif task_type == 'text':\n        (X_tr, y_tr),(X_te, y_te) = keras.datasets.imdb.load_data(num_words=10000)\n        X_tr, X_te = pad_sequences(X_tr, maxlen=200), pad_sequences(X_te, maxlen=200)\n        model = Sequential([\n            Embedding(10000,64,input_length=200),\n            Bidirectional(LSTM(32)),\n            Dense(32,activation='relu'), Dropout(0.5),\n            Dense(1,activation='sigmoid')])\n        model.compile(optimizer='adam',loss='binary_crossentropy',metrics=['accuracy'])\n    \n    else:\n        X, y = make_classification(n_samples=5000, n_features=20, n_classes=5, n_informative=15)\n        X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.2)\n        sc = StandardScaler(); X_tr = sc.fit_transform(X_tr); X_te = sc.transform(X_te)\n        model = Sequential([\n            Dense(128,activation='relu',input_shape=(20,)),Dropout(0.3),\n            Dense(64,activation='relu'),Dropout(0.3),\n            Dense(5,activation='softmax')])\n        model.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'])\n    \n    h = model.fit(X_tr, y_tr, epochs=epochs, batch_size=64, validation_split=0.15,\n                  callbacks=[EarlyStopping(patience=5,restore_best_weights=True)], verbose=1)\n    _, acc = model.evaluate(X_te, y_te)\n    elapsed = time.time() - start\n    \n    return {'task': task_type, 'model': model, 'test_accuracy': round(acc,4),\n            'training_time_sec': round(elapsed,1), 'epochs_trained': len(h.history['loss'])}`, difficulty: 5 } }
+];
+// ═══════════════════════════════════════════════════════════════
+// RENDERING HELPERS
+// ═══════════════════════════════════════════════════════════════
+function renderContent(text) {
+  const parts = text.split(/(```python[\s\S]*?```)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("```python")) {
+      const code = part.replace(/```python\n?/, "").replace(/\n?```/, "");
+      return (
+        <pre key={i} style={{
+          background: "#1a1a2e", color: "#e0e0ff", padding: "16px", borderRadius: "10px",
+          fontSize: "13px", lineHeight: "1.6", overflowX: "auto", margin: "14px 0",
+          fontFamily: "'Source Code Pro', 'Fira Code', monospace", border: "1px solid rgba(255,255,255,0.06)"
+        }}><code>{code}</code></pre>
+      );
+    }
+    return part.split("\n").map((line, j) => {
+      if (line.startsWith("**") && line.endsWith("**"))
+        return <p key={`${i}-${j}`} style={{ fontWeight: 700, margin: "10px 0 4px", color: "#f0e6d3" }}>{line.replace(/\*\*/g, "")}</p>;
+      if (line.startsWith("• "))
+        return <p key={`${i}-${j}`} style={{ margin: "3px 0", paddingLeft: "16px", color: "#c8bfb4" }}>-> {line.slice(2)}</p>;
+      if (line.trim() === "") return <br key={`${i}-${j}`} />;
+      return <p key={`${i}-${j}`} style={{ margin: "4px 0", lineHeight: 1.7, color: "#c8bfb4" }}>{line}</p>;
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FLASHCARD COMPONENT
+// ═══════════════════════════════════════════════════════════════
+function Flashcard({ card, index, flipped, onFlip, onMark, status }) {
+  return (
+    <div onClick={onFlip} style={{ perspective: "800px", cursor: "pointer", marginBottom: "16px" }}>
+      <div style={{
+        position: "relative", width: "100%", minHeight: "130px",
+        transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+        transformStyle: "preserve-3d", transform: flipped ? "rotateY(180deg)" : "rotateY(0deg)",
+      }}>
+        <div style={{
+          position: "absolute", width: "100%", minHeight: "130px", backfaceVisibility: "hidden",
+          background: status === "got" ? "linear-gradient(135deg, #2a3a2a, #1e2e1e)" :
+                      status === "review" ? "linear-gradient(135deg, #3a2a1a, #2e1e0e)" :
+                      "linear-gradient(135deg, #2a2438, #1e1a2e)",
+          borderRadius: "14px", padding: "20px 24px", display: "flex", flexDirection: "column", justifyContent: "center",
+          border: status === "got" ? "1px solid rgba(100,200,100,0.2)" :
+                 status === "review" ? "1px solid rgba(200,150,100,0.2)" : "1px solid rgba(160,140,200,0.15)",
+          boxSizing: "border-box",
+        }}>
+          <div style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "2px", color: "#8a7fa0", marginBottom: "10px" }}>Card {index + 1} -- tap to flip</div>
+          <div style={{ fontSize: "15px", color: "#e8e0f0", lineHeight: 1.6 }}>{card.q}</div>
+        </div>
+        <div style={{
+          position: "absolute", width: "100%", minHeight: "130px", backfaceVisibility: "hidden",
+          transform: "rotateY(180deg)", background: "linear-gradient(135deg, #1e2a38, #162030)",
+          borderRadius: "14px", padding: "20px 24px", display: "flex", flexDirection: "column", justifyContent: "center",
+          border: "1px solid rgba(100,180,255,0.15)", boxSizing: "border-box",
+        }}>
+          <div style={{ fontSize: "10px", textTransform: "uppercase", letterSpacing: "2px", color: "#6a9fc0", marginBottom: "10px" }}>Answer</div>
+          <div style={{ fontSize: "15px", color: "#d0e8ff", lineHeight: 1.6 }}>{card.a}</div>
+          <div style={{ display: "flex", gap: "10px", marginTop: "14px" }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => onMark("got")} style={{
+              flex: 1, padding: "8px", border: "1px solid rgba(100,200,100,0.3)", background: status === "got" ? "rgba(100,200,100,0.2)" : "transparent",
+              borderRadius: "8px", color: "#90d090", cursor: "pointer", fontSize: "12px", fontWeight: 600
+            }}>Got it</button>
+            <button onClick={() => onMark("review")} style={{
+              flex: 1, padding: "8px", border: "1px solid rgba(200,150,100,0.3)", background: status === "review" ? "rgba(200,150,100,0.2)" : "transparent",
+              borderRadius: "8px", color: "#d0a878", cursor: "pointer", fontSize: "12px", fontWeight: 600
+            }}>Review</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CODE EXERCISE COMPONENT
+// ═══════════════════════════════════════════════════════════════
+function CodeExercise({ exercise, dayIndex, userCode, onCodeChange, feedback, onCheckCode, onClearFeedback, checking }) {
+  const [showHint, setShowHint] = useState(false);
+  const [showSolution, setShowSolution] = useState(false);
+  const textareaRef = useRef(null);
+
+  const diffStars = Array.from({length: 5}, (_, i) => i < exercise.difficulty ? "\u2605" : "\u2606").join("");
+  const diffColor = exercise.difficulty <= 2 ? "#70c070" : exercise.difficulty <= 3 ? "#c0b050" : exercise.difficulty <= 4 ? "#d09040" : "#d06060";
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Tab") {
+      e.preventDefault();
+      const ta = textareaRef.current;
+      const start = ta.selectionStart;
+      const end = ta.selectionEnd;
+      const newVal = userCode.substring(0, start) + "    " + userCode.substring(end);
+      onCodeChange(newVal);
+      setTimeout(() => { ta.selectionStart = ta.selectionEnd = start + 4; }, 0);
+    }
+  };
+
+  return (
+    <div style={{ background: "#16131f", borderRadius: "16px", border: "1px solid rgba(255,255,255,0.05)", padding: "24px", marginBottom: "24px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+        <h3 style={{ fontSize: "12px", letterSpacing: "2px", textTransform: "uppercase", color: "#8a8098", fontWeight: 600, margin: 0 }}>Coding Exercise</h3>
+        <div style={{ fontSize: "12px", color: diffColor, letterSpacing: "1px" }} title={`Difficulty: ${exercise.difficulty}/5`}>{diffStars}</div>
+      </div>
+
+      <div style={{
+        background: "rgba(201,162,39,0.06)", border: "1px solid rgba(201,162,39,0.12)", borderRadius: "10px",
+        padding: "16px", marginBottom: "16px", fontSize: "14px", lineHeight: 1.7, color: "#e0d8c8"
+      }}>{exercise.prompt}</div>
+
+      <button onClick={() => setShowHint(!showHint)} style={{
+        background: "transparent", border: "none", color: "#8a8098", cursor: "pointer",
+        fontSize: "12px", padding: "4px 0", marginBottom: "8px", fontFamily: "inherit"
+      }}>{showHint ? "\u25be Hide hint" : "\u25b8 Show hint"}</button>
+
+      {showHint && (
+        <div style={{
+          background: "rgba(100,140,200,0.08)", borderRadius: "8px", padding: "12px 14px",
+          fontSize: "13px", color: "#a0b8d0", marginBottom: "12px", lineHeight: 1.6,
+          borderLeft: "3px solid rgba(100,140,200,0.3)"
+        }}>{exercise.hint}</div>
+      )}
+
+      <textarea ref={textareaRef} value={userCode} onChange={(e) => { onCodeChange(e.target.value); if (feedback) onClearFeedback(); }}
+        onKeyDown={handleKeyDown} placeholder="# Write your Python code here..." spellCheck={false}
+        style={{
+          width: "100%", minHeight: "180px", background: "#1a1a2e", color: "#e0e0ff",
+          border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "16px",
+          fontFamily: "'Source Code Pro', 'Fira Code', monospace", fontSize: "13px", lineHeight: "1.6",
+          resize: "vertical", outline: "none", boxSizing: "border-box",
+        }}
+        onFocus={(e) => e.target.style.borderColor = "rgba(201,162,39,0.4)"}
+        onBlur={(e) => e.target.style.borderColor = "rgba(255,255,255,0.08)"}
+      />
+
+      <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+        <button onClick={onCheckCode} disabled={checking || !userCode.trim()} style={{
+          flex: 2, padding: "12px", borderRadius: "10px", border: "none",
+          background: checking ? "rgba(201,162,39,0.15)" : !userCode.trim() ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #c9a227, #b8911f)",
+          color: checking ? "#c9a227" : !userCode.trim() ? "#555" : "#0e0c15",
+          fontSize: "13px", fontWeight: 700, cursor: checking || !userCode.trim() ? "default" : "pointer",
+          fontFamily: "inherit", opacity: !userCode.trim() ? 0.5 : 1,
+        }}>{checking ? "Reviewing..." : "Check My Code"}</button>
+        <button onClick={() => setShowSolution(!showSolution)} style={{
+          flex: 1, padding: "12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)",
+          background: "transparent", color: "#8a8098", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+        }}>{showSolution ? "Hide Solution" : "Show Solution"}</button>
+      </div>
+
+      {feedback && (
+        <div style={{
+          marginTop: "16px", borderRadius: "12px", padding: "18px",
+          background: feedback.type === "success" ? "rgba(80,180,100,0.08)" : feedback.type === "error" ? "rgba(200,80,80,0.08)" : "rgba(100,140,200,0.08)",
+          border: `1px solid ${feedback.type === "success" ? "rgba(80,180,100,0.2)" : feedback.type === "error" ? "rgba(200,80,80,0.2)" : "rgba(100,140,200,0.2)"}`,
+        }}>
+          <div style={{
+            fontSize: "11px", textTransform: "uppercase", letterSpacing: "1.5px", marginBottom: "8px", fontWeight: 600,
+            color: feedback.type === "success" ? "#70c070" : feedback.type === "error" ? "#d07070" : "#7090c0"
+          }}>{feedback.type === "success" ? "Great work!" : feedback.type === "error" ? "Needs work" : "AI Review"}</div>
+          <div style={{
+            fontSize: "14px", lineHeight: 1.7, whiteSpace: "pre-wrap",
+            color: feedback.type === "success" ? "#a0d0a0" : feedback.type === "error" ? "#d0a0a0" : "#a0b8d0"
+          }}>{feedback.text}</div>
+        </div>
+      )}
+
+      {showSolution && (
+        <div style={{ marginTop: "16px" }}>
+          <div style={{ fontSize: "11px", textTransform: "uppercase", letterSpacing: "1.5px", color: "#8a8098", marginBottom: "8px", fontWeight: 600 }}>Model Solution</div>
+          <pre style={{
+            background: "#1a1a2e", color: "#b0e0b0", padding: "16px", borderRadius: "10px",
+            fontSize: "13px", lineHeight: "1.6", overflowX: "auto",
+            fontFamily: "'Source Code Pro', 'Fira Code', monospace", border: "1px solid rgba(100,200,100,0.1)"
+          }}><code>{exercise.solution.replace(/\\n/g, "\n")}</code></pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RESET BUTTON
+// ═══════════════════════════════════════════════════════════════
+function ResetButton({ onReset, textSecondary, surface }) {
+  const [confirming, setConfirming] = useState(false);
+  return (
+    <div style={{ marginTop: "32px", padding: "20px", background: surface, borderRadius: "14px", border: "1px solid rgba(255,255,255,0.05)" }}>
+      {!confirming ? (
+        <button onClick={() => setConfirming(true)} style={{
+          width: "100%", padding: "12px", borderRadius: "10px", border: "1px solid rgba(200,80,80,0.2)",
+          background: "transparent", color: "#c07070", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit"
+        }}>Reset All Progress</button>
+      ) : (
+        <div style={{ textAlign: "center" }}>
+          <p style={{ color: "#e07070", fontSize: "14px", fontWeight: 600, marginBottom: "8px" }}>Are you sure?</p>
+          <p style={{ color: textSecondary, fontSize: "12px", marginBottom: "16px" }}>This will erase all progress, code, flashcards, and your streak.</p>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button onClick={() => setConfirming(false)} style={{
+              flex: 1, padding: "10px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)",
+              background: "transparent", color: textSecondary, fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit"
+            }}>Cancel</button>
+            <button onClick={() => { onReset(); setConfirming(false); }} style={{
+              flex: 1, padding: "10px", borderRadius: "10px", border: "none",
+              background: "rgba(200,60,60,0.25)", color: "#f08080", fontSize: "13px", fontWeight: 600, cursor: "pointer", fontFamily: "inherit"
+            }}>Yes, Reset</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STORAGE
+// ═══════════════════════════════════════════════════════════════
+const STORAGE_KEY = "tfk-progress-v1";
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+function calcStreak(dates) {
+  if (!dates || dates.length === 0) return 0;
+  const sorted = [...new Set(dates)].sort().reverse();
+  const today = todayStr();
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (sorted[0] !== today && sorted[0] !== yesterday) return 0;
+  let s = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i - 1] + "T00:00:00");
+    const curr = new Date(sorted[i] + "T00:00:00");
+    if ((prev - curr) / 86400000 === 1) s++; else break;
+  }
+  return s;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN APP
+// ═══════════════════════════════════════════════════════════════
+function App() {
+  const [currentDay, setCurrentDay] = useState(0);
+  const [completed, setCompleted] = useState({});
+  const [cardStatus, setCardStatus] = useState({});
+  const [flipped, setFlipped] = useState({});
+  const [view, setView] = useState("lesson");
+  const [reminderTime, setReminderTime] = useState("09:00");
+  const [reminderSet, setReminderSet] = useState(false);
+  const [notifPermission, setNotifPermission] = useState("default");
+  const [streak, setStreak] = useState(0);
+  const [completionDates, setCompletionDates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState("");
+  const [userCodes, setUserCodes] = useState({});
+  const [exerciseFeedback, setExerciseFeedback] = useState({});
+  const [checking, setChecking] = useState(false);
+  const intervalRef = useRef(null);
+  const initDone = useRef(false);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const d = JSON.parse(saved);
+        setCurrentDay(d.currentDay ?? 0); setCompleted(d.completed ?? {});
+        setCardStatus(d.cardStatus ?? {}); setReminderTime(d.reminderTime ?? "09:00");
+        setCompletionDates(d.completionDates ?? []); setUserCodes(d.userCodes ?? {});
+      }
+    } catch (e) {}
+    setLoading(false);
+    setTimeout(() => { initDone.current = true; }, 300);
+  }, []);
+
+  useEffect(() => {
+    if (!initDone.current) return;
+    setSaveStatus("saving");
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ currentDay, completed, cardStatus, reminderTime, completionDates, userCodes }));
+      setSaveStatus("saved");
+    } catch { setSaveStatus("error"); }
+    setTimeout(() => setSaveStatus(""), 2000);
+  }, [currentDay, completed, cardStatus, reminderTime, completionDates, userCodes]);
+
+  const resetProgress = () => {
+    setCurrentDay(0); setCompleted({}); setCardStatus({}); setCompletionDates([]);
+    setFlipped({}); setStreak(0); setUserCodes({}); setExerciseFeedback({});
+    try { localStorage.removeItem(STORAGE_KEY); } catch {}
+  };
+
+  const lesson = LESSONS[currentDay];
+  const totalCompleted = Object.keys(completed).length;
+  const totalCards = LESSONS.reduce((s, l) => s + l.cards.length, 0);
+  const gotCards = Object.values(cardStatus).filter(s => s === "got").length;
+  const reviewCards = Object.values(cardStatus).filter(s => s === "review").length;
+  const exercisesDone = Object.keys(userCodes).filter(k => userCodes[k]?.trim()).length;
+
+  useEffect(() => { setStreak(calcStreak(completionDates)); }, [completionDates]);
+
+  const markComplete = () => {
+    const today = todayStr();
+    setCompleted(p => ({ ...p, [currentDay]: true }));
+    setCompletionDates(p => p.includes(today) ? p : [...p, today]);
+    if (currentDay < LESSONS.length - 1) {
+      setCurrentDay(currentDay + 1); setFlipped({}); window.scrollTo(0, 0);
+    }
+  };
+  const markCard = (di, ci, s) => setCardStatus(p => ({ ...p, [`${di}-${ci}`]: s }));
+  const updateCode = (code) => setUserCodes(p => ({ ...p, [currentDay]: code }));
+
+  const checkCode = async () => {
+    const code = userCodes[currentDay] || "";
+    if (!code.trim()) return;
+    setChecking(true);
+    setExerciseFeedback(p => ({ ...p, [currentDay]: null }));
+    try {
+      const ex = lesson.exercise;
+      const topics = LESSONS.slice(0, currentDay + 1).map(l => `Day ${l.day}: ${l.title}`).join(", ");
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514", max_tokens: 1000,
+          system: `You are a Python tutor for a data science course. Topics covered so far: ${topics}. Review the student's code for the exercise. Be encouraging but precise. If correct, confirm clearly and note what's done well. If issues exist, explain what's wrong and nudge toward the fix WITHOUT giving the full answer. Keep to 3-6 sentences. Plain text only, no markdown formatting.`,
+          messages: [{ role: "user", content: `Exercise: ${ex.prompt}\n\nModel solution for reference:\n${ex.solution}\n\nStudent code:\n${code}\n\nReview:` }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content?.map(b => b.text || "").join("\n") || "Unable to get feedback.";
+      const good = /correct|great|well done|good job|looks good|nicely|excellent|perfect|solid/i.test(text);
+      setExerciseFeedback(p => ({ ...p, [currentDay]: { text, type: good ? "success" : "error" } }));
+    } catch {
+      setExerciseFeedback(p => ({ ...p, [currentDay]: { text: "Couldn't reach the AI reviewer. Try again, or use 'Show Solution' to compare.", type: "info" } }));
+    }
+    setChecking(false);
+  };
+
+  const setupReminder = async () => {
+    if ("Notification" in window) {
+      const p = await Notification.requestPermission();
+      setNotifPermission(p);
+      if (p !== "granted") return;
+    } else return;
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setReminderSet(true);
+    intervalRef.current = setInterval(() => {
+      const now = new Date();
+      const [h, m] = reminderTime.split(":").map(Number);
+      if (now.getHours() === h && now.getMinutes() === m && now.getSeconds() < 30)
+        new Notification("Python Lesson Time!", { body: `Day ${currentDay + 1}: ${LESSONS[Math.min(currentDay, LESSONS.length - 1)].title}` });
+    }, 15000);
+  };
+  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
+
+  const bg = "#0e0c15", surface = "#16131f", accent = "#c9a227", accentDim = "rgba(201,162,39,0.15)";
+  const textPrimary = "#f0e6d3", textSecondary = "#8a8098";
+  const navBtn = (active) => ({
+    padding: "10px 0", fontSize: "11px", fontWeight: 600, letterSpacing: "1.5px", textTransform: "uppercase",
+    border: "none", background: "transparent", color: active ? accent : textSecondary, cursor: "pointer",
+    borderBottom: active ? `2px solid ${accent}` : "2px solid transparent", fontFamily: "inherit"
+  });
+
+  if (loading) return (
+    <div style={{ minHeight: "100vh", background: bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'DM Sans', system-ui" }}>
+      <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "32px", fontWeight: 800, background: `linear-gradient(135deg, ${accent}, #e8d48b)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: "16px" }}>TF/K</div>
+      <div style={{ color: textSecondary, fontSize: "14px" }}>Loading your progress...</div>
+      <div style={{ width: "40px", height: "40px", border: "3px solid rgba(255,255,255,0.08)", borderTopColor: accent, borderRadius: "50%", marginTop: "20px", animation: "spin 0.8s linear infinite" }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight: "100vh", background: bg, color: textPrimary, fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+
+      {saveStatus && (
+        <div style={{
+          position: "fixed", top: "12px", right: "12px", zIndex: 100, padding: "8px 14px", borderRadius: "8px",
+          fontSize: "11px", fontWeight: 600, letterSpacing: "1px",
+          background: saveStatus === "saved" ? "rgba(100,200,100,0.15)" : saveStatus === "error" ? "rgba(200,80,80,0.15)" : "rgba(200,170,50,0.15)",
+          color: saveStatus === "saved" ? "#90d090" : saveStatus === "error" ? "#e07070" : "#d0b060",
+        }}>{saveStatus === "saving" ? "Saving..." : saveStatus === "saved" ? "Saved" : "Save failed"}</div>
+      )}
+
+      <div style={{ background: surface, borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "20px 24px 0" }}>
+        <div style={{ maxWidth: "640px", margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "18px" }}>
+            <div>
+              <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "22px", fontWeight: 800, margin: 0, background: `linear-gradient(135deg, ${accent}, #e8d48b)`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>TF/K</h1>
+              <p style={{ margin: "2px 0 0", fontSize: "11px", color: textSecondary, letterSpacing: "1px" }}>ML WITH TENSORFLOW & KERAS</p>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: "24px", fontWeight: 700, color: accent }}>{totalCompleted}<span style={{ fontSize: "14px", color: textSecondary }}>/{LESSONS.length}</span></div>
+              <div style={{ fontSize: "10px", color: textSecondary, letterSpacing: "1px" }}>LESSONS DONE</div>
+            </div>
+          </div>
+          <div style={{ height: "3px", background: "rgba(255,255,255,0.05)", borderRadius: "2px", marginBottom: "16px" }}>
+            <div style={{ height: "100%", width: `${(totalCompleted / LESSONS.length) * 100}%`, background: `linear-gradient(90deg, ${accent}, #e8d48b)`, borderRadius: "2px", transition: "width 0.5s ease" }} />
+          </div>
+          <div style={{ display: "flex", gap: "24px" }}>
+            {["lesson", "progress", "review", "reminders"].map(v => (
+              <button key={v} style={navBtn(view === v)} onClick={() => setView(v)}>{v}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: "640px", margin: "0 auto", padding: "24px 24px 100px" }}>
+
+        {view === "lesson" && (
+          <div>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "24px" }}>
+              {LESSONS.map((l, i) => (
+                <button key={i} onClick={() => { setCurrentDay(i); setFlipped({}); }} style={{
+                  width: "32px", height: "32px", borderRadius: "8px",
+                  border: i === currentDay ? `2px solid ${accent}` : "1px solid rgba(255,255,255,0.08)",
+                  background: completed[i] ? accentDim : "transparent",
+                  color: i === currentDay ? accent : completed[i] ? "#c9a227aa" : textSecondary,
+                  fontSize: "12px", fontWeight: i === currentDay ? 700 : 500,
+                  cursor: "pointer", fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center"
+                }}>{i + 1}</button>
+              ))}
+            </div>
+
+            <div style={{ background: surface, borderRadius: "16px", padding: "28px 24px", border: "1px solid rgba(255,255,255,0.05)", marginBottom: "24px" }}>
+              <div style={{ fontSize: "10px", color: accent, letterSpacing: "2px", textTransform: "uppercase", marginBottom: "6px", fontWeight: 600 }}>Day {lesson.day} of 30</div>
+              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "24px", fontWeight: 700, margin: "0 0 20px", color: textPrimary }}>{lesson.title}</h2>
+              <div>{renderContent(lesson.content)}</div>
+            </div>
+
+            <CodeExercise exercise={lesson.exercise} dayIndex={currentDay}
+              userCode={userCodes[currentDay] || ""} onCodeChange={updateCode}
+              feedback={exerciseFeedback[currentDay]} onCheckCode={checkCode}
+              onClearFeedback={() => setExerciseFeedback(p => ({ ...p, [currentDay]: null }))}
+              checking={checking}
+            />
+
+            <div style={{ marginBottom: "24px" }}>
+              <h3 style={{ fontSize: "12px", letterSpacing: "2px", textTransform: "uppercase", color: textSecondary, marginBottom: "14px", fontWeight: 600 }}>Flashcards</h3>
+              <div style={{ minHeight: `${lesson.cards.length * 146}px` }}>
+                {lesson.cards.map((card, ci) => (
+                  <Flashcard key={`${currentDay}-${ci}`} card={card} index={ci}
+                    flipped={!!flipped[`${currentDay}-${ci}`]}
+                    onFlip={() => setFlipped(p => ({ ...p, [`${currentDay}-${ci}`]: !p[`${currentDay}-${ci}`] }))}
+                    onMark={(s) => markCard(currentDay, ci, s)} status={cardStatus[`${currentDay}-${ci}`]}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <button onClick={markComplete} style={{
+              width: "100%", padding: "16px", borderRadius: "12px", border: "none",
+              background: completed[currentDay] ? "rgba(100,200,100,0.15)" : `linear-gradient(135deg, ${accent}, #b8911f)`,
+              color: completed[currentDay] ? "#90d090" : "#0e0c15",
+              fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+            }}>{completed[currentDay] ? "Completed -- Next Lesson" : "Mark Complete & Continue"}</button>
+          </div>
+        )}
+
+        {view === "progress" && (
+          <div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "24px", marginBottom: "24px" }}>Your Progress</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "32px" }}>
+              {[
+                { label: "Streak", value: `${streak} day${streak !== 1 ? "s" : ""}`, icon: "\uD83D\uDD25" },
+                { label: "Completed", value: `${totalCompleted}/${LESSONS.length}`, icon: "\uD83D\uDCD6" },
+                { label: "Cards Learned", value: `${gotCards}/${totalCards}`, icon: "\u2713" },
+                { label: "Exercises Done", value: `${exercisesDone}/${LESSONS.length}`, icon: "\uD83D\uDCBB" },
+              ].map((s, i) => (
+                <div key={i} style={{ background: surface, borderRadius: "14px", padding: "20px", border: "1px solid rgba(255,255,255,0.05)", textAlign: "center" }}>
+                  <div style={{ fontSize: "24px", marginBottom: "6px" }}>{s.icon}</div>
+                  <div style={{ fontSize: "22px", fontWeight: 700, color: accent }}>{s.value}</div>
+                  <div style={{ fontSize: "11px", color: textSecondary, letterSpacing: "1px", textTransform: "uppercase", marginTop: "4px" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <h3 style={{ fontSize: "12px", letterSpacing: "2px", textTransform: "uppercase", color: textSecondary, marginBottom: "14px", fontWeight: 600 }}>All Lessons</h3>
+            {LESSONS.map((l, i) => (
+              <div key={i} onClick={() => { setCurrentDay(i); setView("lesson"); setFlipped({}); }} style={{
+                display: "flex", alignItems: "center", gap: "14px", padding: "14px 16px", background: surface,
+                borderRadius: "12px", marginBottom: "8px", cursor: "pointer", border: "1px solid rgba(255,255,255,0.04)",
+              }}>
+                <div style={{
+                  width: "34px", height: "34px", borderRadius: "10px",
+                  background: completed[i] ? accentDim : "rgba(255,255,255,0.04)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "13px", fontWeight: 700, color: completed[i] ? accent : textSecondary, flexShrink: 0,
+                }}>{completed[i] ? "\u2713" : i + 1}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "14px", fontWeight: 600, color: completed[i] ? textPrimary : textSecondary }}>{l.title}</div>
+                  <div style={{ fontSize: "11px", color: textSecondary, marginTop: "2px" }}>
+                    Day {l.day} {Array.from({length:5},(_,x)=> x < l.exercise.difficulty ? "\u2605" : "\u2606").join("")}
+                  </div>
+                </div>
+                {userCodes[i]?.trim() && <div style={{ fontSize: "10px", color: "#6a9fc0", fontWeight: 600, background: "rgba(100,150,200,0.1)", padding: "3px 8px", borderRadius: "6px" }}>CODE</div>}
+              </div>
+            ))}
+            <ResetButton onReset={resetProgress} textSecondary={textSecondary} surface={surface} />
+          </div>
+        )}
+
+        {view === "review" && (
+          <div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "24px", marginBottom: "8px" }}>Flashcard Review</h2>
+            <p style={{ color: textSecondary, marginBottom: "24px", fontSize: "14px" }}>Cards marked for review or not yet seen.</p>
+            {(() => {
+              const list = [];
+              LESSONS.forEach((l, di) => l.cards.forEach((c, ci) => {
+                const k = `${di}-${ci}`;
+                if (cardStatus[k] === "review" || !cardStatus[k]) list.push({ ...c, di, ci, key: k });
+              }));
+              if (!list.length) return (
+                <div style={{ textAlign: "center", padding: "60px 0", color: textSecondary }}>
+                  <div style={{ fontSize: "40px", marginBottom: "16px" }}>All caught up!</div>
+                  <div style={{ fontSize: "13px" }}>No cards left to review.</div>
+                </div>
+              );
+              return <>
+                <div style={{ fontSize: "13px", color: textSecondary, marginBottom: "16px" }}>{list.length} card{list.length !== 1 ? "s" : ""}</div>
+                {list.map(c => (
+                  <div key={c.key} style={{ marginBottom: "4px" }}>
+                    <div style={{ fontSize: "10px", color: textSecondary, marginBottom: "4px", marginLeft: "4px" }}>Day {c.di + 1}: {LESSONS[c.di].title}</div>
+                    <Flashcard card={c} index={c.ci} flipped={!!flipped[c.key]}
+                      onFlip={() => setFlipped(p => ({ ...p, [c.key]: !p[c.key] }))}
+                      onMark={(s) => markCard(c.di, c.ci, s)} status={cardStatus[c.key]} />
+                  </div>
+                ))}
+              </>;
+            })()}
+          </div>
+        )}
+
+        {view === "reminders" && (
+          <div>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: "24px", marginBottom: "8px" }}>Daily Reminders</h2>
+            <p style={{ color: textSecondary, marginBottom: "32px", fontSize: "14px" }}>Get a browser notification each day to study.</p>
+            <div style={{ background: surface, borderRadius: "16px", padding: "32px 24px", border: "1px solid rgba(255,255,255,0.05)", textAlign: "center" }}>
+              <div style={{ fontSize: "48px", marginBottom: "20px" }}>&#9200;</div>
+              <label style={{ fontSize: "12px", letterSpacing: "2px", textTransform: "uppercase", color: textSecondary, display: "block", marginBottom: "12px" }}>Reminder Time</label>
+              <input type="time" value={reminderTime} onChange={e => { setReminderTime(e.target.value); setReminderSet(false); }}
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", padding: "14px 20px", color: textPrimary, fontSize: "24px", fontFamily: "'Source Code Pro', monospace", textAlign: "center", outline: "none", width: "180px" }} />
+              <br />
+              <button onClick={setupReminder} style={{
+                marginTop: "20px", padding: "14px 40px", borderRadius: "12px", border: "none",
+                background: reminderSet ? "rgba(100,200,100,0.15)" : `linear-gradient(135deg, ${accent}, #b8911f)`,
+                color: reminderSet ? "#90d090" : "#0e0c15", fontSize: "14px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+              }}>{reminderSet ? "Reminder Active" : "Enable Reminder"}</button>
+              {notifPermission === "denied" && <p style={{ color: "#e07070", marginTop: "16px", fontSize: "13px" }}>Notifications blocked. Enable in browser settings.</p>}
+              <div style={{ marginTop: "28px", padding: "16px", background: "rgba(255,255,255,0.03)", borderRadius: "10px", fontSize: "13px", color: textSecondary, lineHeight: 1.6 }}>
+                <strong style={{ color: textPrimary }}>How it works:</strong><br />Keep this tab open to get a daily notification at your chosen time.
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(React.createElement(App), document.getElementById('root'));
+</script>
+</body>
+</html>
